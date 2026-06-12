@@ -20,7 +20,7 @@ Koordinaten im Modell: x läuft entlang Wand A (0 = Ecke D/A), y von Wand A (y=0
 | Fenster (in Wand D) | links 120 cm Abstand zu Wand C, rechts 22 cm Mauer zu Wand A → Breite = 300 − 120 − 22 = **158 cm** |
 | Fensterbank | Höhe 95 cm, Tiefe 20,5 cm |
 | Fensterlaibung (Tiefe des Fensters) | 17 cm |
-| Deckenhöhe | **unbekannt — aus Video bestimmen** (angenommen: 300 cm, da Kleiderstange auf 270 cm geplant) |
+| Deckenhöhe | **292 cm** (gemessen, Chat 12.06.) |
 
 ## Möbel
 
@@ -44,8 +44,7 @@ Koordinaten im Modell: x läuft entlang Wand A (0 = Ecke D/A), y von Wand A (y=0
 
 ## Offene Punkte (aus Video zu klären)
 
-1. Deckenhöhe
-2. Fensterhöhe (Oberkante) und Sturz
+1. Fensterhöhe (Oberkante) und Sturz
 3. Anzahl weiße / türkise Kommoden und aktuelle Positionen
 4. Grundfläche Hochbett + Position
 5. IKEA-Regal Breite/Höhe
