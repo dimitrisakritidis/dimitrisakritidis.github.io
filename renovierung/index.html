@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zimmer 3D — Renovierungsplanung</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; font-family: system-ui, sans-serif; }
+  #app { width: 100%; height: 100%; }
+  #panel {
+    position: absolute; top: 12px; left: 12px; background: rgba(255,255,255,.92);
+    border-radius: 10px; padding: 12px 16px; font-size: 13px; line-height: 1.7;
+    box-shadow: 0 2px 10px rgba(0,0,0,.2); max-width: 270px;
+  }
+  #panel h1 { font-size: 15px; margin: 0 0 6px; }
+  #panel .hint { color: #666; font-size: 11.5px; }
+  .lbl {
+    background: rgba(255,255,255,.85); border-radius: 4px; padding: 1px 5px;
+    font-size: 11px; color: #223; white-space: nowrap; pointer-events: none;
+  }
+  .lbl.assume { color: #a40; }
+  .lbl.dim { background: rgba(20,40,90,.8); color: #fff; }
+</style>
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="app"></div>
+<div id="panel">
+  <h1>Zimmer — 3D-Entwurf</h1>
+  <label><input type="checkbox" id="cbDims" checked> Maße anzeigen</label><br>
+  <label><input type="checkbox" id="cbLabels" checked> Beschriftungen</label><br>
+  <label><input type="checkbox" id="cbCeil"> Decke anzeigen</label><br>
+  <div class="hint">
+    Ziehen = drehen · Rad = zoomen · Rechtsklick = verschieben.<br>
+    <span style="color:#a40">Orange Beschriftungen</span> = Annahme, noch per Video/Messung zu bestätigen.
+    Raumgeometrie nach Chat-Maßen vom 12.06.2026.
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+// ---- Maße in Metern (x: entlang Wand A ab Ecke D/A, z: von Wand A Richtung Wand C, y: Höhe)
+const RX = 4.14, RZ = 3.00, RH = 3.00;       // Wand A/C, Wand B/D, Deckenhöhe (ANNAHME)
+const T = 0.12;                               // Wandstärke (nur Optik)
+const DOOR_X0 = RX - 0.60 - 0.95, DOOR_W = 0.95, DOOR_H = 2.05;  // Tür in Wand C
+const WIN_Z0 = 0.22, WIN_W = 1.58, WIN_SILL = 0.95, WIN_TOP = 2.30; // Fenster in Wand D (Höhe oben = Annahme)
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xeef1f5);
+const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, .05, 100);
+camera.position.set(6.5, 4.6, 6.8);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(devicePixelRatio);
+renderer.shadowMap.enabled = true;
+document.getElementById('app').appendChild(renderer.domElement);
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(innerWidth, innerHeight);
+Object.assign(labelRenderer.domElement.style, { position: 'absolute', top: 0, pointerEvents: 'none' });
+document.body.appendChild(labelRenderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 1.1, 0);
+
+scene.add(new THREE.AmbientLight(0xffffff, .55));
+const sun = new THREE.DirectionalLight(0xfff4e0, 1.1);
+sun.position.set(-6, 8, 4); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+scene.add(sun);
+
+const room = new THREE.Group();
+room.position.set(-RX/2, 0, -RZ/2);   // Raum um Ursprung zentrieren
+scene.add(room);
+
+const matWall  = new THREE.MeshStandardMaterial({ color: 0xf2ede4 });
+const matFloor = new THREE.MeshStandardMaterial({ color: 0xc9a877 });
+const labels = [], dims = [];
+
+function box(w, h, d, x, y, z, mat, parent = room) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x + w/2, y + h/2, z + d/2);
+  m.castShadow = m.receiveShadow = true;
+  parent.add(m);
+  return m;
+}
+function label(text, x, y, z, assume = false) {
+  const div = document.createElement('div');
+  div.className = 'lbl' + (assume ? ' assume' : '');
+  div.textContent = text;
+  const o = new CSS2DObject(div);
+  o.position.set(x, y, z);
+  room.add(o); labels.push(o);
+}
+function dim(text, ax, ay, az, bx, by, bz, off = [0,0,0]) {
+  const a = new THREE.Vector3(ax+off[0], ay+off[1], az+off[2]);
+  const b = new THREE.Vector3(bx+off[0], by+off[1], bz+off[2]);
+  const line = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([a, b]),
+    new THREE.LineBasicMaterial({ color: 0x1a3a8a }));
+  room.add(line);
+  const div = document.createElement('div');
+  div.className = 'lbl dim'; div.textContent = text;
+  const o = new CSS2DObject(div);
+  o.position.copy(a.clone().add(b).multiplyScalar(.5));
+  room.add(o);
+  dims.push(line, o);
+}
+
+// ---- Boden & Decke
+box(RX, .02, RZ, 0, -.02, 0, matFloor);
+const ceiling = box(RX, .04, RZ, 0, RH, 0,
+  new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: .9 }));
+ceiling.visible = false;
+
+// ---- Wand A (z=0, außen) — volle Länge
+box(RX, RH, T, 0, 0, -T, matWall);
+// ---- Wand B (x=RX)
+box(T, RH, RZ, RX, 0, 0, matWall);
+// ---- Wand C (z=RZ) mit Türöffnung
+box(DOOR_X0, RH, T, 0, 0, RZ, matWall);
+box(RX - DOOR_X0 - DOOR_W, RH, T, DOOR_X0 + DOOR_W, 0, RZ, matWall);
+box(DOOR_W, RH - DOOR_H, T, DOOR_X0, DOOR_H, RZ, matWall);
+// Türblatt (geschlossen in der Öffnung)
+box(DOOR_W, DOOR_H, .04, DOOR_X0, 0, RZ + .04,
+  new THREE.MeshStandardMaterial({ color: 0xb98a55 }));
+label('Tür 95 (Standard)', DOOR_X0 + DOOR_W/2, 1.2, RZ - .1);
+
+// ---- Wand D (x=0) mit Fensteröffnung (Fenster sitzt 22 cm von Wand A: z = WIN_Z0..WIN_Z0+WIN_W)
+box(T, RH, WIN_Z0, -T, 0, 0, matWall);                                  // Streifen zu Wand A
+box(T, RH, RZ - WIN_Z0 - WIN_W, -T, 0, WIN_Z0 + WIN_W, matWall);        // Streifen zu Wand C
+box(T, WIN_SILL, WIN_W, -T, 0, WIN_Z0, matWall);                        // Brüstung
+box(T, RH - WIN_TOP, WIN_W, -T, WIN_TOP, WIN_Z0, matWall);              // Sturz
+box(.205, .03, WIN_W + .06, -.02, WIN_SILL, WIN_Z0 - .03,               // Fensterbank T 20,5
+  new THREE.MeshStandardMaterial({ color: 0xe8e8e8 }));
+box(.02, WIN_TOP - WIN_SILL, WIN_W, -T + .06, WIN_SILL, WIN_Z0,         // Glas (Laibung 17)
+  new THREE.MeshStandardMaterial({ color: 0x9fd8ef, transparent: true, opacity: .35 }));
+label('Fenster 158 (Höhe oben: Annahme 230)', .15, 1.9, WIN_Z0 + WIN_W/2, true);
+
+// ---- Schacht Ecke A/B: 15 (x) × 48 (z)
+box(.15, RH, .48, RX - .15, 0, 0, matWall);
+label('Schacht 15×48', RX - .2, 2.0, .55);
+
+// ---- Möbel (Positionen = ENTWURF) ----
+const matWhite = new THREE.MeshStandardMaterial({ color: 0xfafafa });
+const matTurq  = new THREE.MeshStandardMaterial({ color: 0x7fd4c8 });
+const matWood  = new THREE.MeshStandardMaterial({ color: 0xd9b894 });
+const matShelf = new THREE.MeshStandardMaterial({ color: 0xcfe0c3 });
+
+// Hochbett (Grundfläche ANNAHME 200×90, Liegehöhe 160) an Wand A
+const bedX = .40;
+box(2.0, .12, .90, bedX, 1.48, 0, matWood);                  // Plattform
+for (const [px, pz] of [[bedX+.02,.02],[bedX+1.9,.02],[bedX+.02,.8],[bedX+1.9,.8]])
+  box(.08, 1.48, .08, px, 0, pz, matWood);                   // Pfosten
+box(2.0, .18, .90, bedX, 1.60, 0,
+  new THREE.MeshStandardMaterial({ color: 0xdde6f0 }));      // Matratze
+label('Hochbett H160 (200×90: Annahme)', bedX + 1.0, 1.85, .45, true);
+
+// 2 Kleiderstangen @270 übers Bett (je ~90, nebeneinander), 30 von Wand A
+const matRail = new THREE.MeshStandardMaterial({ color: 0x884466, metalness: .6, roughness: .3 });
+for (const x0 of [bedX + .1, bedX + 1.05]) {
+  const rail = new THREE.Mesh(new THREE.CylinderGeometry(.015, .015, .9), matRail);
+  rail.rotation.z = Math.PI/2;
+  rail.position.set(x0 + .45, 2.70, .30);
+  room.add(rail);
+  for (const hx of [x0 + .05, x0 + .85])                      // Abhänger zur Decke
+    box(.02, RH - 2.70, .02, hx, 2.70, .29, matRail);
+}
+label('2 Kleiderstangen @270', bedX + 1.0, 2.78, .30);
+
+// Klimmzugstange parallel zu Wand A (Position: ENTWURF), rechts neben den Stangen
+const pull = new THREE.Mesh(
+  new THREE.CylinderGeometry(.017, .017, 1.0),
+  new THREE.MeshStandardMaterial({ color: 0x333333, metalness: .7, roughness: .35 }));
+pull.rotation.z = Math.PI/2;
+pull.position.set(3.05, 2.20, .18);
+room.add(pull);
+label('Klimmzugstange (Position: Entwurf)', 3.05, 2.3, .25, true);
+
+// Großer weißer Schrank an Wand B (100×65×237), nach dem Schacht
+box(.65, 2.37, 1.0, RX - .65, 0, .48, matWhite);
+label('Schrank 100×65×237', RX - .4, 2.45, .98);
+// Spalt 15 für Besen/Werkzeug
+label('Spalt 10–20 (Besen/Werkzeug)', RX - .35, 1.0, 1.55, true);
+// IKEA-Regal (T38; B/H Annahme 110/180)
+box(.38, 1.80, 1.10, RX - .38, 0, 1.73, matShelf);
+label('IKEA-Regal T38 (B/H: Annahme)', RX - .3, 1.9, 2.28, true);
+
+// Kommoden an Wand C links neben der Tür (Positionen: ENTWURF)
+box(.80, .78, .50, .88, 0, RZ - .50, matWhite);
+box(.80, .78, .50, 1.72, 0, RZ - .50, matWhite);
+label('2× Kommode weiß 80×50×78', 1.66, .95, RZ - .25);
+box(.40, .55, .50, .04, 0, RZ - .50, matTurq);
+box(.40, .55, .50, .46, 0, RZ - .50, matTurq);
+label('2× Kommode türkis 40×50×55 (Anzahl?)', .45, .72, RZ - .25, true);
+
+// ---- Maßketten
+dim('Wand A — 414', 0, 0, 0, RX, 0, 0, [0, .02, -.35]);
+dim('Wand B — 300', RX, 0, 0, RX, 0, RZ, [.35, .02, 0]);
+dim('Wand C — Rest neben Tür: 259', 0, 0, RZ, DOOR_X0, 0, RZ, [0, .02, .35]);
+dim('Wand D — 300', 0, 0, 0, 0, 0, RZ, [-.35, .02, 0]);
+dim('Decke 300 (Annahme)', 0, 0, 0, 0, RH, 0, [-.2, 0, -.2]);
+dim('Stange 270', bedX, 0, .3, bedX, 2.7, .3, [-.15, 0, 0]);
+
+// ---- UI
+const byId = id => document.getElementById(id);
+byId('cbDims').onchange  = e => dims.forEach(o => o.visible = e.target.checked);
+byId('cbLabels').onchange = e => labels.forEach(o => o.visible = e.target.checked);
+byId('cbCeil').onchange  = e => ceiling.visible = e.target.checked;
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  labelRenderer.setSize(innerWidth, innerHeight);
+});
+renderer.setAnimationLoop(() => {
+  controls.update();
+  renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
+});
+</script>
+</body>
+</html>
