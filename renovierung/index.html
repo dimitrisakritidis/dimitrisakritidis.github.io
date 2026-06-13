@@ -20,6 +20,22 @@
   }
   .lbl.assume { color: #a40; }
   .lbl.dim { background: rgba(20,40,90,.8); color: #fff; }
+  .lbl.blk { background: rgba(40,50,72,.85); color: #fff; }
+  #editor {
+    position: absolute; bottom: 12px; left: 12px; background: rgba(255,255,255,.95);
+    border-radius: 10px; padding: 10px 14px; font-size: 12.5px; line-height: 1.55;
+    box-shadow: 0 2px 10px rgba(0,0,0,.2); max-width: 320px;
+  }
+  #editor h2 { font-size: 13px; margin: 0 0 6px; }
+  #editor .row { margin: 5px 0; }
+  #editor input[type=number] { width: 44px; }
+  #editor button {
+    font-size: 12px; padding: 3px 9px; margin: 2px 3px 2px 0; border-radius: 6px;
+    border: 1px solid #bbb; background: #f3f3f3; cursor: pointer;
+  }
+  #editor button.active { background: #2a7d52; color: #fff; border-color: #2a7d52; }
+  #editor #selInfo { color: #234; font-size: 11.5px; margin-top: 5px; min-height: 1.2em; }
+  #editor .hint { color: #666; font-size: 11px; }
 </style>
 <script type="importmap">
 { "imports": {
@@ -41,10 +57,40 @@
     Chat-Maße + Video-Abgleich vom 12.06.2026 — Ziel-Layout.
   </div>
 </div>
+<div id="editor">
+  <h2>🧱 Bauen &amp; Anordnen</h2>
+  <div class="row">
+    B <input type="number" id="inW" value="50" min="1" max="400"> ·
+    T <input type="number" id="inD" value="50" min="1" max="400"> ·
+    H <input type="number" id="inH" value="50" min="1" max="400"> cm
+  </div>
+  <div class="row">
+    Farbe
+    <select id="inColor">
+      <option>Holz</option><option>Weiß</option><option>Türkis</option><option>Grau</option><option>Blau</option>
+    </select>
+    <button id="btnAdd">+ Baustein</button>
+  </div>
+  <div class="row">
+    <button id="btnMove">Verschieben (W)</button>
+    <button id="btnRot">Drehen (E)</button>
+    <button id="btnDel">Löschen (Entf)</button>
+  </div>
+  <div class="row">
+    <label><input type="checkbox" id="cbSnap" checked> 90°-Einrasten</label>
+    &nbsp;Schritt
+    <select id="selStep">
+      <option value="90">90°</option><option value="45">45°</option><option value="15">15°</option>
+    </select>
+  </div>
+  <div id="selInfo">Nichts ausgewählt</div>
+  <div class="hint">Baustein anklicken zum Auswählen · Gizmo-Pfeile (verschieben) bzw. -Ringe (drehen) ziehen · leeren Bereich klicken hebt die Auswahl auf.</div>
+</div>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
 
 // ---- Maße in Metern (x: entlang Wand A ab Ecke D/A, z: von Wand A Richtung Wand C, y: Höhe)
 const RX = 4.14, RZ = 3.00, RH = 2.92;       // Wand A/C, Wand B/D, Deckenhöhe (gemessen)
@@ -78,7 +124,7 @@ const room = new THREE.Group();
 room.position.set(-RX/2, 0, -RZ/2);   // Raum um Ursprung zentrieren
 scene.add(room);
 
-const matWall  = new THREE.MeshStandardMaterial({ color: 0xf2ede4 });
+const matWall  = new THREE.MeshStandardMaterial({ color: 0xf2ede4, transparent: true, opacity: 0.30, side: THREE.DoubleSide, depthWrite: false });
 const matFloor = new THREE.MeshStandardMaterial({ color: 0xc9a877 });
 const labels = [], dims = [];
 
@@ -284,6 +330,143 @@ function renderFrame() {
 }
 controls.addEventListener('change', renderFrame);
 renderFrame();
+
+// ===== Möbel-Editor: Bausteine hinzufügen · verschieben · um alle Achsen drehen · 90°-Einrasten =====
+
+// Durchsichtige Wände sollen keine harten Schatten mehr werfen
+room.traverse(o => { if (o.isMesh && o.material === matWall) o.castShadow = false; });
+
+const tcontrols = new TransformControls(camera, renderer.domElement);
+tcontrols.setSize(0.9);
+scene.add(tcontrols.getHelper ? tcontrols.getHelper() : tcontrols);   // r166+: getHelper(); r165: das Objekt selbst
+tcontrols.addEventListener('change', renderFrame);
+tcontrols.addEventListener('objectChange', updateSelInfo);
+tcontrols.addEventListener('dragging-changed', e => { controls.enabled = !e.value; });  // Kamera während Gizmo-Zug sperren
+
+const editable = [];
+let selected = null;
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
+let snapOn = true, angleStep = 90;
+function applySnap() {
+  tcontrols.setTranslationSnap(snapOn ? 0.05 : null);                 // 5-cm-Raster beim Verschieben
+  tcontrols.setRotationSnap(snapOn ? THREE.MathUtils.degToRad(angleStep) : null);  // Winkel-Einrasten
+}
+
+const PALETTE = { 'Holz': 0xc59b6c, 'Weiß': 0xf2f2f2, 'Türkis': 0x7fd4c8, 'Grau': 0x9aa3ad, 'Blau': 0x5b8fc7 };
+const clampCm = v => Math.min(400, Math.max(1, Math.round((+v) || 50)));   // gültige Maße: 1..400 cm
+
+function addBlock(wCm, hCm, dCm, colorHex) {
+  const w = wCm/100, h = hCm/100, d = dCm/100;
+  const m = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, d),
+    new THREE.MeshStandardMaterial({ color: colorHex, roughness: .7 }));  // opak → sauber vor/hinter den Glaswänden sortiert
+  // Startposition: Raummitte (room-lokal), je Baustein leicht versetzt (sonst exakt deckungsgleich)
+  const n = editable.length;
+  m.position.set(RX/2 + (n % 5 - 2) * 0.3, h/2 + 0.005, RZ/2 + Math.floor(n / 5) * 0.3);
+  m.castShadow = m.receiveShadow = true;
+  m.userData.name = 'Baustein';
+  m.add(new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry),
+    new THREE.LineBasicMaterial({ color: 0x222831 })));               // Kanten zur besseren Sichtbarkeit
+  const div = document.createElement('div');
+  div.className = 'lbl blk';
+  div.textContent = `${wCm}×${dCm}×${hCm}`;
+  const lbl = new CSS2DObject(div); lbl.position.set(0, h/2 + 0.08, 0);
+  lbl.visible = byId('cbLabels').checked;                             // folgt dem „Beschriftungen“-Schalter
+  m.add(lbl);
+  m.userData.label = lbl;
+  labels.push(lbl);
+  room.add(m);                                                        // gleiche Gruppe wie die Bestandsmöbel → gemeinsames 5-cm-Raster
+  editable.push(m);
+  selectObject(m);
+}
+
+function selectObject(obj) {
+  if (selected && selected.material.emissive) selected.material.emissive.setHex(0x000000);
+  selected = obj;
+  if (obj) { tcontrols.attach(obj); if (obj.material.emissive) obj.material.emissive.setHex(0x2a2f48); }
+  else tcontrols.detach();
+  updateSelInfo();
+  renderFrame();
+}
+
+function deleteSelected() {
+  if (!selected) return;
+  tcontrols.detach();
+  // CSS2D-Label sauber abräumen, sonst bleibt ein Geister-Div an alter Position im Bild hängen
+  const lbl = selected.userData.label;
+  if (lbl) {
+    lbl.removeFromParent();
+    if (lbl.element) lbl.element.remove();
+    const li = labels.indexOf(lbl); if (li >= 0) labels.splice(li, 1);
+  }
+  room.remove(selected);
+  selected.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+  const i = editable.indexOf(selected); if (i >= 0) editable.splice(i, 1);
+  selected = null;
+  updateSelInfo();
+  renderFrame();
+}
+
+function setMode(mode) {
+  tcontrols.setMode(mode);
+  byId('btnMove').classList.toggle('active', mode === 'translate');
+  byId('btnRot').classList.toggle('active', mode === 'rotate');
+  renderFrame();
+}
+
+function updateSelInfo() {
+  const el = byId('selInfo'); if (!el) return;
+  if (!selected) { el.textContent = 'Nichts ausgewählt'; return; }
+  const deg = a => Math.round(THREE.MathUtils.radToDeg(a));
+  const r = selected.rotation;
+  el.textContent = `Ausgewählt · Drehung  X ${deg(r.x)}°  Y ${deg(r.y)}°  Z ${deg(r.z)}°`;
+}
+
+// Klick wählt aus — aber nur echte Klicks, keine Kamera-Drags und keine Gizmo-Bedienung
+let down = null, onGizmo = false;
+renderer.domElement.addEventListener('pointerdown', e => {
+  down = { x: e.clientX, y: e.clientY }; onGizmo = (tcontrols.axis !== null);
+});
+renderer.domElement.addEventListener('pointerup', e => {
+  if (!down) return;
+  const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+  const wasGizmo = onGizmo || tcontrols.dragging; down = null; onGizmo = false;
+  if (moved > 5 || wasGizmo) return;
+  const rect = renderer.domElement.getBoundingClientRect();
+  pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObjects(editable, false);
+  selectObject(hits.length ? hits[0].object : null);
+});
+// Touch-Abbruch (z.B. Mehrfinger/Scroll-Geste): Kamera nie dauerhaft gesperrt lassen + State zurücksetzen
+addEventListener('pointercancel', () => { down = null; onGizmo = false; controls.enabled = true; renderFrame(); });
+// Maustaste außerhalb des Canvas losgelassen: hängenden Klick-State aufräumen
+addEventListener('pointerup', () => { down = null; onGizmo = false; });
+
+byId('btnAdd').onclick = () => addBlock(
+  clampCm(byId('inW').value), clampCm(byId('inH').value), clampCm(byId('inD').value),
+  PALETTE[byId('inColor').value]);
+byId('btnMove').onclick = () => setMode('translate');
+byId('btnRot').onclick  = () => setMode('rotate');
+byId('btnDel').onclick  = deleteSelected;
+byId('cbSnap').onchange = e => { snapOn = e.target.checked; applySnap(); };
+byId('selStep').onchange = e => { angleStep = +e.target.value; applySnap(); };
+
+addEventListener('keydown', e => {
+  if (/^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(e.target.tagName)) return;   // nicht in Formularfeldern/Buttons
+  const k = e.key.toLowerCase();
+  if (k === 'w') setMode('translate');
+  else if (k === 'e') setMode('rotate');
+  else if (e.key === 'Delete') deleteSelected();                          // nur Entf (kein Backspace → kein Versehen)
+  else if (e.key === 'Escape') selectObject(null);
+});
+
+applySnap();
+setMode('translate');
+updateSelInfo();
 </script>
 </body>
 </html>
