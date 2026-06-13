@@ -51,8 +51,8 @@ def moebel(x, y, w, h, label, color="#cdd8e3", rot_label=False, angle=0):
 # --- Ziel-Layout (Video-Abgleich 12.06.2026; Positionen = ENTWURF) ---
 
 # Klappbett an Wand A („ganz ran"), rechtes Ende links neben der Klimmzugstange;
-# Ecke D/A bleibt frei für den Fenster-Schreibtisch. Grundfläche Annahme 200×120
-moebel(140, 0, 200, 120, "Klappbett 200×120 (Annahme)\nklappt hoch an Wand A (dann H≈160)", "#e3d5cd")
+# Ecke D/A bleibt frei für den Fenster-Schreibtisch. Grundfläche 200×160 (bestätigt)
+moebel(140, 0, 200, 160, "Klappbett 200×160 (aufgeklappt)\nhochgeklappt: nur ~25 tief, H160", "#e3d5cd")
 
 # 2 Kleiderstangen @H270 übers Bett
 ax.plot([145, 235], [30, 30], color="#937", lw=3, zorder=5)
@@ -70,8 +70,8 @@ ax.plot([A - 33, A - 33], [0, 200], color="#333", lw=3, zorder=5)
 ax.annotate("Klimmzugstange 200 @H~240\n(Dübel Wand A ↔ auf Schrank)", (A - 45, 196), fontsize=7.5,
             ha="right", color="#333")
 
-# Massageliege geklappt zwischen Wand A und Schrank (Ton 11:33)
-moebel(A - 85, 8, 65, 30, "Massageliege\ngeklappt (H170)", "#9bc")
+# Massageliege geklappt — Platz entsteht bei hochgeklapptem Bett (Ton 11:33)
+moebel(250, 5, 65, 30, "Massageliege geklappt\n(Platz bei hochgekl. Bett)", "#9bc")
 
 # Kallax 4×4 an Wand C — kreative Einheit; rechts 1-m-Ablage (immer frei) + Sitz
 moebel(6, B - 39, 147, 39, "Kallax 4×4 — 147×39 (H147)\nkreative Einheit (16 Fächer)", "#efe3cf")

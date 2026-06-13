@@ -166,11 +166,11 @@ function rotBox(w, h, d, cx, y, cz, angleDeg, mat, parent = room) {
 // Klappbett an Wand A (Video: hochklappbar, Lattenrost auf Holzbalken, Matratze ~15;
 // hochgeklappt ~160 hoch. Grundfläche ANNAHME 200×120). „Ganz ran" an Wand A,
 // rechtes Ende links neben der Klimmzugstange; Ecke D/A bleibt frei für den Fenster-Schreibtisch.
-const bedX = 1.40, bedL = 2.0, bedW = 1.2;
+const bedX = 1.40, bedL = 2.0, bedW = 1.6;                    // 200×160 (bestätigt)
 box(bedL, .22, bedW, bedX, 0, 0, matWood);                   // Holzbalken + Lattenrost
 box(bedL - .04, .15, bedW - .04, bedX + .02, .22, .02,
   new THREE.MeshStandardMaterial({ color: 0xdde6f0 }));      // Matratze ~15
-label('Klappbett 200×120 (Annahme) — klappt hoch an Wand A, dann H≈160', bedX + 1.0, .65, .6, true);
+label('Klappbett 200×160 — aufgeklappt. Hochgeklappt: nur ~25 tief, 160 hoch an Wand A', bedX + 1.0, .5, .8);
 
 // 2 Kleiderstangen @270 übers Bett (je ~90, nebeneinander), 30 von Wand A
 const matRail = new THREE.MeshStandardMaterial({ color: 0x884466, metalness: .6, roughness: .3 });
@@ -203,9 +203,10 @@ pull.position.set(RX - .33, 2.42, 1.0);
 room.add(pull);
 label('Klimmzugstange 200 Ø5 @~240: Dübel Wand A ↔ liegt auf Schrank (Entwurf)', RX - .33, 2.58, .8, true);
 
-// Massageliege geklappt (65 breit, klappbar auf 170) zwischen Wand A und Schrank, unter der Stange (Ton 11:33)
-box(.65, 1.70, .30, RX - .85, 0, .08, new THREE.MeshStandardMaterial({ color: 0x3a5a7a }));
-label('Massageliege geklappt 65×~30 H170 (Entwurf)', RX - .55, 1.85, .25, true);
+// Massageliege geklappt (65 breit, klappbar auf 170) — Platz dafür entsteht, wenn das
+// Bett hochgeklappt ist (Ton 11:33: "zwischen Wand und Schrank, darüber die Klimmzugstange")
+box(.65, 1.70, .30, 2.55, 0, .05, new THREE.MeshStandardMaterial({ color: 0x3a5a7a }));
+label('Massageliege geklappt 65×30 H170 — Platz bei hochgeklapptem Bett (Entwurf)', 2.55, 1.85, .2, true);
 
 // Kallax 4×4 (147×39×147, 16 Fächer) → Ziel: Wand C („kreative Einheit")
 box(1.47, 1.47, .39, .06, 0, RZ - .39, matKallax);

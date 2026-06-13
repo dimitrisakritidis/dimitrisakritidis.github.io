@@ -39,12 +39,12 @@ _Video-Bestätigung: Dimitris benennt die Wände am Video-Ende (11:33–12:01) i
 
 | Möbel | B × T × H | Quelle / Anmerkung |
 |---|---|---|
-| **Bett (hochklappbar!)** | Grundfläche **Annahme ~200 × 100–140**; hochgeklappt ~160 hoch | Video: KEIN Hochbett. Lattenrost auf Holzbalken, Matratze ~15 cm, klappt gegen Wand A hoch, Seil-Sicherung an der Klimmzugstange. Im Video zerlegt/hochgeklappt (2–3 Lattenpaneele à ~200×100 lehnen an Wand A), Matratze derzeit am Boden |
+| **Bett (hochklappbar!)** | **200 × 160** (✅ Dimitris 13.06.); hochgeklappt ~160 hoch, nur ~25 tief | Video: KEIN Hochbett. Lattenrost auf Holzbalken, Matratze ~15 cm, klappt gegen Wand A hoch, Seil-Sicherung an der Klimmzugstange. **Doppelnutzung:** aufgeklappt belegt es 200×160, hochgeklappt wird die Fläche frei → Platz für Massageliege + Klimmzugstange darüber |
 | IKEA-Würfelregal | **Kallax 4×4 = 16 Fächer** ≈ 147 × 39 × 147 | Video bestätigt 16 Fächer; Dimitris-Schätzung 135 B × 145 H, Standardmaß 147×147, Tiefe 38 gemessen ✓. Steht aktuell auf weißem 2-türigem Unterschrank (~60–65 hoch) → Oberkante ~210 |
 | Regal unter dem Kallax | ~135–147 × ? × ~60–70 | Video/Ton: „ungefähr die Hälfte, ~70 hoch, Breite auch 1,35" |
-| Großer weißer Schrank (Wand B) | 100 × 65 × 237 | Chat. Video: 2-türig, Spiegelfront-Anteil; Gesamtblock wirkt ~150 breit → vermutlich Schrank (100) + separater Anlehn-Spiegel (~50) — **offene Frage** |
+| Großer weißer Schrank (Wand B) | 100 × 65 × 237 | Chat (✅ Dimitris 13.06.: **100 breit**; der Spiegel ist auf die Schranktür geklebt — kein separates Möbel) |
 | Weiße Kommode | 80 × 50 × 78 | Chat. Video: **2 Stück** (MALM-artig, je 3 Schubladen), als Schreibtisch-Unterbau an Wand C; evtl. eine 3. verdeckt |
-| Türkise Kommode | 40 × 50 × 55 | Chat. Video: **2 Stück AUF der Schreibtischplatte** (mit Etiketten). ⚠️ Mehrere Analyse-Agenten schätzen sie größer (~50–60 B, 60–70 H) — **Maß-Widerspruch, mit Dimitris klären** |
+| Türkise Kommode | 40 × 50 × 55 | Chat (✅ Dimitris 13.06. bestätigt — Video-Eindruck „größer" war Perspektivtäuschung). Video: **2 Stück AUF der Schreibtischplatte** (mit Etiketten) |
 | Schreibtisch (Eigenbau) | Platte **200 lang** (Ton) + **30-cm-Modul** dahinter gesteckt (separat); Tiefe ~65 (Ton); auf den 2 weißen Kommoden, Paletten-Rückwand | Video/Ton. Bild-Schätzung der Platte eher 250–260 — evtl. inkl. Modul + Überstand |
 | Bücher-Wandregale über Schreibtisch | ~250 breit, 3–4 Ebenen, Tiefen **30 / 20 / 20** (Ton); Oberkante ~230–250 | Video/Ton. Oberste Ebene war für die Katze → „komplett wegdenken" |
 | Massageliege (elektrisch, Räder) | **65 breit**, halbgeklappt ~200 lang, klappbar auf **180 / 170** | Ton. Steht vor dem Fenster (Wand D), blockiert Heizkörper |
@@ -79,12 +79,11 @@ _Video-Bestätigung: Dimitris benennt die Wände am Video-Ende (11:33–12:01) i
 5. ~~Klimmzugstange~~ → 200 lang Ø 5, diagonal über Ecke A/B (Ist), Ziel: parallel Schrank↔Wand A
 6. ~~Heizkörper/Steckdosen/Lichtschalter~~ → siehe Elektrik-Tabelle
 
-## Offene Punkte (neu, mit Dimitris klären)
+## Offene Punkte (mit Dimitris zu klären)
 
-1. **Türkise Kommoden**: Chat-Maß 40×50×55 vs. Video-Eindruck ~50–60×60–70 — welches stimmt? (Betrifft Fenster-Schreibtisch-Planung.)
-2. **Bett-Grundfläche**: exakte Länge × Breite im aufgeklappten Zustand? (Paneele deuten auf ~200 Länge; Breite 100? 140?)
-3. **Großer weißer Schrank**: ist der Spiegel eine Schranktür (Schrank dann ~150 breit?) oder separater Anlehn-Spiegel neben dem 100er-Schrank?
-4. **„Billy-/Billigregal"** (Ton 9:52, beide Whisper-Modelle unsicher): Welches Regal ist gemeint, auf das die Schreibtisch-Regaleinheit links oben drauf soll — das Kallax?
-5. **Kallax-Unterschrank**: kommt der weiße 2-türige Unterschrank mit an Wand C (Kallax dann Oberkante ~210) oder steht das Kallax künftig am Boden?
-6. Schacht 15×48: im Video nie sichtbar — bei Gelegenheit Foto/Bestätigung.
-7. Fenster-Oberkante: bei Gelegenheit nachmessen (Video-Schätzung ±10 cm).
+1. **„Billy-/Billigregal"** (Ton 9:52, beide Whisper-Modelle unsicher): Welches Regal ist gemeint, auf das die Schreibtisch-Regaleinheit links oben drauf soll — das Kallax?
+2. **Kallax-Unterschrank**: kommt der weiße 2-türige Unterschrank mit an Wand C (Kallax dann Oberkante ~210) oder steht das Kallax künftig am Boden?
+3. Schacht 15×48: im Video nie sichtbar — bei Gelegenheit Foto/Bestätigung.
+4. Fenster-Oberkante: bei Gelegenheit nachmessen (Video-Schätzung ±10 cm).
+
+_Geklärt am 13.06.: türkise Kommode = 40×50×55 · Bett-Grundfläche = 200×160 · Schrank = 100 breit (Spiegel auf der Tür)._
