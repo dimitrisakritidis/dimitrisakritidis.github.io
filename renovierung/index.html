@@ -37,8 +37,8 @@
   <label><input type="checkbox" id="cbCeil"> Decke anzeigen</label><br>
   <div class="hint">
     Ziehen = drehen · Rad = zoomen · Rechtsklick = verschieben.<br>
-    <span style="color:#a40">Orange Beschriftungen</span> = Annahme, noch per Video/Messung zu bestätigen.
-    Raumgeometrie nach Chat-Maßen vom 12.06.2026.
+    <span style="color:#a40">Orange Beschriftungen</span> = Annahme/Entwurf, noch zu bestätigen.
+    Chat-Maße + Video-Abgleich vom 12.06.2026 — Ziel-Layout.
   </div>
 </div>
 <script type="module">
@@ -50,13 +50,13 @@ import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer
 const RX = 4.14, RZ = 3.00, RH = 2.92;       // Wand A/C, Wand B/D, Deckenhöhe (gemessen)
 const T = 0.12;                               // Wandstärke (nur Optik)
 const DOOR_X0 = RX - 0.60 - 0.95, DOOR_W = 0.95, DOOR_H = 2.05;  // Tür in Wand C
-const WIN_Z0 = 0.22, WIN_W = 1.58, WIN_SILL = 0.95, WIN_TOP = 2.30; // Fenster in Wand D (Höhe oben = Annahme)
+const WIN_Z0 = 0.22, WIN_W = 1.58, WIN_SILL = 0.95, WIN_TOP = 2.45; // Fenster in Wand D (Höhe oben ~245 = Video-Schätzung)
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xeef1f5);
 const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, .05, 100);
 camera.position.set(6.5, 4.6, 6.8);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(devicePixelRatio);
 renderer.shadowMap.enabled = true;
@@ -140,30 +140,41 @@ box(.205, .03, WIN_W + .06, -.02, WIN_SILL, WIN_Z0 - .03,               // Fenst
   new THREE.MeshStandardMaterial({ color: 0xe8e8e8 }));
 box(.02, WIN_TOP - WIN_SILL, WIN_W, -T + .06, WIN_SILL, WIN_Z0,         // Glas (Laibung 17)
   new THREE.MeshStandardMaterial({ color: 0x9fd8ef, transparent: true, opacity: .35 }));
-label('Fenster 158 (Höhe oben: Annahme 230)', .15, 1.9, WIN_Z0 + WIN_W/2, true);
+label('Fenster 158 (Höhe oben ~245: Video-Schätzung)', .15, 1.9, WIN_Z0 + WIN_W/2, true);
 
 // ---- Schacht Ecke A/B: 15 (x) × 48 (z)
 box(.15, RH, .48, RX - .15, 0, 0, matWall);
 label('Schacht 15×48', RX - .2, 2.0, .55);
 
-// ---- Möbel (Positionen = ENTWURF) ----
+// ---- Möbel (Ziel-Layout nach Video-Abgleich 12.06.2026 — Positionen = ENTWURF) ----
 const matWhite = new THREE.MeshStandardMaterial({ color: 0xfafafa });
 const matTurq  = new THREE.MeshStandardMaterial({ color: 0x7fd4c8 });
 const matWood  = new THREE.MeshStandardMaterial({ color: 0xd9b894 });
 const matShelf = new THREE.MeshStandardMaterial({ color: 0xcfe0c3 });
+const matKallax = new THREE.MeshStandardMaterial({ color: 0xe8dcc8 });
+const matSocket = new THREE.MeshStandardMaterial({ color: 0xe8e8e8 });
 
-// Hochbett (Grundfläche ANNAHME 200×90, Liegehöhe 160) an Wand A
-const bedX = .40;
-box(2.0, .12, .90, bedX, 1.48, 0, matWood);                  // Plattform
-for (const [px, pz] of [[bedX+.02,.02],[bedX+1.9,.02],[bedX+.02,.8],[bedX+1.9,.8]])
-  box(.08, 1.48, .08, px, 0, pz, matWood);                   // Pfosten
-box(2.0, .18, .90, bedX, 1.60, 0,
-  new THREE.MeshStandardMaterial({ color: 0xdde6f0 }));      // Matratze
-label('Hochbett H160 (200×90: Annahme)', bedX + 1.0, 1.85, .45, true);
+function rotBox(w, h, d, cx, y, cz, angleDeg, mat, parent = room) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(cx, y + h/2, cz);
+  m.rotation.y = angleDeg * Math.PI / 180;
+  m.castShadow = m.receiveShadow = true;
+  parent.add(m);
+  return m;
+}
+
+// Klappbett an Wand A (Video: hochklappbar, Lattenrost auf Holzbalken, Matratze ~15;
+// hochgeklappt ~160 hoch. Grundfläche ANNAHME 200×120). „Ganz ran" an Wand A,
+// rechtes Ende links neben der Klimmzugstange; Ecke D/A bleibt frei für den Fenster-Schreibtisch.
+const bedX = 1.40, bedL = 2.0, bedW = 1.2;
+box(bedL, .22, bedW, bedX, 0, 0, matWood);                   // Holzbalken + Lattenrost
+box(bedL - .04, .15, bedW - .04, bedX + .02, .22, .02,
+  new THREE.MeshStandardMaterial({ color: 0xdde6f0 }));      // Matratze ~15
+label('Klappbett 200×120 (Annahme) — klappt hoch an Wand A, dann H≈160', bedX + 1.0, .65, .6, true);
 
 // 2 Kleiderstangen @270 übers Bett (je ~90, nebeneinander), 30 von Wand A
 const matRail = new THREE.MeshStandardMaterial({ color: 0x884466, metalness: .6, roughness: .3 });
-for (const x0 of [bedX + .1, bedX + 1.05]) {
+for (const x0 of [bedX + .05, bedX + 1.0]) {
   const rail = new THREE.Mesh(new THREE.CylinderGeometry(.015, .015, .9), matRail);
   rail.rotation.z = Math.PI/2;
   rail.position.set(x0 + .45, 2.70, .30);
@@ -171,33 +182,77 @@ for (const x0 of [bedX + .1, bedX + 1.05]) {
   for (const hx of [x0 + .05, x0 + .85])                      // Abhänger zur Decke
     box(.02, RH - 2.70, .02, hx, 2.70, .29, matRail);
 }
-label('2 Kleiderstangen @270', bedX + 1.0, 2.78, .30);
-
-// Klimmzugstange parallel zu Wand A (Position: ENTWURF), rechts neben den Stangen
-const pull = new THREE.Mesh(
-  new THREE.CylinderGeometry(.017, .017, 1.0),
-  new THREE.MeshStandardMaterial({ color: 0x333333, metalness: .7, roughness: .35 }));
-pull.rotation.z = Math.PI/2;
-pull.position.set(3.05, 2.20, .18);
-room.add(pull);
-label('Klimmzugstange (Position: Entwurf)', 3.05, 2.3, .25, true);
+label('2 Kleiderstangen @270 (links neben Klimmzugstange)', bedX + 1.0, 2.78, .30);
 
 // Großer weißer Schrank an Wand B (100×65×237), nach dem Schacht
 box(.65, 2.37, 1.0, RX - .65, 0, .48, matWhite);
 label('Schrank 100×65×237', RX - .4, 2.45, .98);
-// Spalt 15 für Besen/Werkzeug
-label('Spalt 10–20 (Besen/Werkzeug)', RX - .35, 1.0, 1.55, true);
-// IKEA-Regal (T38; B/H Annahme 110/180)
-box(.38, 1.80, 1.10, RX - .38, 0, 1.73, matShelf);
-label('IKEA-Regal T38 (B/H: Annahme)', RX - .3, 1.9, 2.28, true);
+// Spalt 10–20 (Besen/Handfeger) + 2 kleine Regale für Werkzeugkoffer rechts daneben
+box(.4, .04, .35, RX - .4, .45, 1.66, matShelf);
+box(.4, .04, .35, RX - .4, .95, 1.66, matShelf);
+for (const pz of [1.66, 1.99]) box(.02, .95, .02, RX - .4, 0, pz, matShelf);
+label('Spalt 10–20 (Besen) + 2 Regale (Werkzeugkoffer)', RX - .35, 1.25, 1.85, true);
 
-// Kommoden an Wand C links neben der Tür (Positionen: ENTWURF)
-box(.80, .78, .50, .88, 0, RZ - .50, matWhite);
-box(.80, .78, .50, 1.72, 0, RZ - .50, matWhite);
-label('2× Kommode weiß 80×50×78', 1.66, .95, RZ - .25);
-box(.40, .55, .50, .04, 0, RZ - .50, matTurq);
-box(.40, .55, .50, .46, 0, RZ - .50, matTurq);
-label('2× Kommode türkis 40×50×55 (Anzahl?)', .45, .72, RZ - .25, true);
+// Klimmzugstange 200 Ø5 (Ziel: parallel statt diagonal — ein Ende auf dem Schrank
+// aufliegend, anderes Ende mit Dübeln an Wand A; Ton 7:20 + 11:33)
+const pull = new THREE.Mesh(
+  new THREE.CylinderGeometry(.025, .025, 2.0),
+  new THREE.MeshStandardMaterial({ color: 0x333333, metalness: .7, roughness: .35 }));
+pull.rotation.x = Math.PI/2;
+pull.position.set(RX - .33, 2.42, 1.0);
+room.add(pull);
+label('Klimmzugstange 200 Ø5 @~240: Dübel Wand A ↔ liegt auf Schrank (Entwurf)', RX - .33, 2.58, .8, true);
+
+// Massageliege geklappt (65 breit, klappbar auf 170) zwischen Wand A und Schrank, unter der Stange (Ton 11:33)
+box(.65, 1.70, .30, RX - .85, 0, .08, new THREE.MeshStandardMaterial({ color: 0x3a5a7a }));
+label('Massageliege geklappt 65×~30 H170 (Entwurf)', RX - .55, 1.85, .25, true);
+
+// Kallax 4×4 (147×39×147, 16 Fächer) → Ziel: Wand C („kreative Einheit")
+box(1.47, 1.47, .39, .06, 0, RZ - .39, matKallax);
+for (let i = 1; i < 4; i++) {                                  // Fächer-Raster angedeutet
+  box(.01, 1.47, .02, .06 + i * 1.47/4, 0, RZ - .41, matWhite);
+  box(1.47, .01, .02, .06, i * 1.47/4, RZ - .41, matWhite);
+}
+label('Kallax 4×4 147×147×39 — kreative Einheit (Ziel: Wand C)', .8, 1.6, RZ - .2, true);
+// 1-m-Ablage (immer frei) rechts daneben + Sitzmöglichkeit (Box-Workflow)
+box(1.0, .04, .5, 1.6, .75, RZ - .5, matWood);
+for (const [lx, lz] of [[1.62, RZ - .48],[2.54, RZ - .48],[1.62, RZ - .08],[2.54, RZ - .08]])
+  box(.04, .75, .04, lx, 0, lz, matWood);
+box(.42, .45, .42, 1.95, 0, RZ - 1.05, matShelf);
+label('1-m-Ablage (immer frei) + Sitz', 2.1, 1.0, RZ - .3, true);
+
+// Schreibtisch ans Fenster (Wand D): 2 weiße Kommoden ~30° gedreht, Platte um
+// 2 Bretter gekürzt, türkise Kommoden oben — Zickzack-/Eck-Idee (Ton 10:20–11:33, ENTWURF)
+rotBox(.8, .78, .5, .48, 0 + .0, .62, -30, matWhite);
+rotBox(.8, .78, .5, .48, 0 + .0, 1.62, 30, matWhite);
+rotBox(1.0, .04, .5, .50, .78, .62, -30, matWood);
+rotBox(1.0, .04, .5, .50, .78, 1.62, 30, matWood);
+rotBox(.4, .55, .5, .48, .82, .62, -30, matTurq);
+rotBox(.4, .55, .5, .48, .82, 1.62, 30, matTurq);
+label('Fenster-Schreibtisch: 2× weiß 80×50×78 um ~30° gedreht, Platte gekürzt, 2× türkis oben (Zickzack-Entwurf)', .6, 1.5, 1.12, true);
+
+// Heizkörper unter dem Fenster (Video) — von der Ziel-Planung freizuhalten
+box(.09, .5, 1.1, .01, .2, WIN_Z0 + .24, matWhite);
+label('Heizkörper (Video)', .2, .35, WIN_Z0 + .8);
+
+// Bestand: OSB-/Leiterregale in der 60-cm-Nische zwischen Schrank und Tür (Wand C)
+for (const hy of [.4, .9, 1.4, 1.9])
+  box(.55, .03, .3, DOOR_X0 + DOOR_W + .03, hy, RZ - .3, matShelf);
+label('Nische 60: OSB-Regale (Bestand)', DOOR_X0 + DOOR_W + .3, 2.15, RZ - .35);
+
+// Bestand: Spiegel an der Tür („bleibt, funktional")
+box(.4, 1.2, .02, DOOR_X0 + .28, .85, RZ - .03,
+  new THREE.MeshStandardMaterial({ color: 0xbfd9e2, metalness: .5, roughness: .2 }));
+label('Spiegel (bleibt)', DOOR_X0 + .48, 2.12, RZ - .1);
+
+// Elektrik (Video, ±15 cm): Schalter+Steckdose neben Tür · 2× Doppel-Steckdose Wand C ·
+// Steckdose Wand A kniehoch · hohe Dose Wand C (~250)
+box(.08, .16, .03, DOOR_X0 - .14, 1.00, RZ - .03, matSocket);
+box(.12, .07, .03, 1.0, 1.13, RZ - .03, matSocket);
+box(.12, .07, .03, 1.95, 1.13, RZ - .03, matSocket);
+box(.12, .07, .03, RX - 1.0, .32, 0, matSocket);
+box(.12, .07, .03, 3.0, 2.48, RZ - .03, matSocket);
+label('Elektrik lt. Video (Schalter/Steckdosen)', DOOR_X0 - .15, 1.35, RZ - .15);
 
 // ---- Maßketten
 dim('Wand A — 414', 0, 0, 0, RX, 0, 0, [0, .02, -.35]);
@@ -209,21 +264,25 @@ dim('Stange 270', bedX, 0, .3, bedX, 2.7, .3, [-.15, 0, 0]);
 
 // ---- UI
 const byId = id => document.getElementById(id);
-byId('cbDims').onchange  = e => dims.forEach(o => o.visible = e.target.checked);
-byId('cbLabels').onchange = e => labels.forEach(o => o.visible = e.target.checked);
-byId('cbCeil').onchange  = e => ceiling.visible = e.target.checked;
+byId('cbDims').onchange  = e => { dims.forEach(o => o.visible = e.target.checked); renderFrame(); };
+byId('cbLabels').onchange = e => { labels.forEach(o => o.visible = e.target.checked); renderFrame(); };
+byId('cbCeil').onchange  = e => { ceiling.visible = e.target.checked; renderFrame(); };
 
 addEventListener('resize', () => {
   camera.aspect = innerWidth/innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
   labelRenderer.setSize(innerWidth, innerHeight);
+  renderFrame();
 });
-renderer.setAnimationLoop(() => {
-  controls.update();
+
+// On-Demand-Rendering: nur neu zeichnen, wenn die Kamera bewegt wird (spart Strom/CPU)
+function renderFrame() {
   renderer.render(scene, camera);
   labelRenderer.render(scene, camera);
-});
+}
+controls.addEventListener('change', renderFrame);
+renderFrame();
 </script>
 </body>
 </html>
