@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zimmer 3D — Renovierungsplanung</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; font-family: system-ui, sans-serif; }
+  #app { width: 100%; height: 100%; }
+  #panel {
+    position: absolute; top: 12px; left: 12px; background: rgba(255,255,255,.92);
+    border-radius: 10px; padding: 12px 16px; font-size: 13px; line-height: 1.7;
+    box-shadow: 0 2px 10px rgba(0,0,0,.2); max-width: 270px;
+  }
+  #panel h1 { font-size: 15px; margin: 0 0 6px; }
+  #panel .hint { color: #666; font-size: 11.5px; }
+  .lbl {
+    background: rgba(255,255,255,.85); border-radius: 4px; padding: 1px 5px;
+    font-size: 11px; color: #223; white-space: nowrap; pointer-events: none;
+  }
+  .lbl.assume { color: #a40; }
+  .lbl.dim { background: rgba(20,40,90,.8); color: #fff; }
+  .lbl.blk { background: rgba(40,50,72,.85); color: #fff; }
+  #editor {
+    position: absolute; bottom: 12px; left: 12px; background: rgba(255,255,255,.95);
+    border-radius: 10px; padding: 10px 14px; font-size: 12.5px; line-height: 1.55;
+    box-shadow: 0 2px 10px rgba(0,0,0,.2); max-width: 320px;
+  }
+  #editor h2 { font-size: 13px; margin: 0 0 6px; }
+  #editor .row { margin: 5px 0; }
+  #editor input[type=number] { width: 44px; }
+  #editor button {
+    font-size: 12px; padding: 3px 9px; margin: 2px 3px 2px 0; border-radius: 6px;
+    border: 1px solid #bbb; background: #f3f3f3; cursor: pointer;
+  }
+  #editor button.active { background: #2a7d52; color: #fff; border-color: #2a7d52; }
+  #editor #selInfo { color: #234; font-size: 11.5px; margin-top: 5px; min-height: 1.2em; }
+  #editor .hint { color: #666; font-size: 11px; }
+</style>
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="app"></div>
+<div id="panel">
+  <h1>Zimmer — 3D-Entwurf</h1>
+  <label><input type="checkbox" id="cbDims" checked> Maße anzeigen</label><br>
+  <label><input type="checkbox" id="cbLabels" checked> Beschriftungen</label><br>
+  <label><input type="checkbox" id="cbCeil"> Decke anzeigen</label><br>
+  <div class="hint">
+    Ziehen = drehen · Rad = zoomen · Rechtsklick = verschieben.<br>
+    <span style="color:#a40">Orange Beschriftungen</span> = Annahme/Entwurf, noch zu bestätigen.
+    Chat-Maße + Video-Abgleich vom 12.06.2026 — Ziel-Layout.
+  </div>
+</div>
+<div id="editor">
+  <h2>🧱 Bauen &amp; Anordnen</h2>
+  <div class="row">
+    B <input type="number" id="inW" value="50" min="1" max="400"> ·
+    T <input type="number" id="inD" value="50" min="1" max="400"> ·
+    H <input type="number" id="inH" value="50" min="1" max="400"> cm
+  </div>
+  <div class="row">
+    Farbe
+    <select id="inColor">
+      <option>Holz</option><option>Weiß</option><option>Türkis</option><option>Grau</option><option>Blau</option>
+    </select>
+    <button id="btnAdd">+ Baustein</button>
+  </div>
+  <div class="row">
+    <button id="btnMove">Verschieben (W)</button>
+    <button id="btnRot">Drehen (E)</button>
+    <button id="btnDel">Löschen (Entf)</button>
+  </div>
+  <div class="row">
+    <label><input type="checkbox" id="cbSnap" checked> 90°-Einrasten</label>
+    &nbsp;Schritt
+    <select id="selStep">
+      <option value="90">90°</option><option value="45">45°</option><option value="15">15°</option>
+    </select>
+  </div>
+  <div id="selInfo">Nichts ausgewählt</div>
+  <div class="hint">Baustein anklicken zum Auswählen · Gizmo-Pfeile (verschieben) bzw. -Ringe (drehen) ziehen · leeren Bereich klicken hebt die Auswahl auf.</div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
+
+// ---- Maße in Metern (x: entlang Wand A ab Ecke D/A, z: von Wand A Richtung Wand C, y: Höhe)
+const RX = 4.14, RZ = 3.00, RH = 2.92;       // Wand A/C, Wand B/D, Deckenhöhe (gemessen)
+const T = 0.12;                               // Wandstärke (nur Optik)
+const DOOR_X0 = RX - 0.60 - 0.95, DOOR_W = 0.95, DOOR_H = 2.05;  // Tür in Wand C
+const WIN_Z0 = 0.22, WIN_W = 1.58, WIN_SILL = 0.95, WIN_TOP = 2.45; // Fenster in Wand D (Höhe oben ~245 = Video-Schätzung)
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xeef1f5);
+const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, .05, 100);
+camera.position.set(6.5, 4.6, 6.8);
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(devicePixelRatio);
+renderer.shadowMap.enabled = true;
+document.getElementById('app').appendChild(renderer.domElement);
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(innerWidth, innerHeight);
+Object.assign(labelRenderer.domElement.style, { position: 'absolute', top: 0, pointerEvents: 'none' });
+document.body.appendChild(labelRenderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 1.1, 0);
+
+scene.add(new THREE.AmbientLight(0xffffff, .55));
+const sun = new THREE.DirectionalLight(0xfff4e0, 1.1);
+sun.position.set(-6, 8, 4); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+scene.add(sun);
+
+const room = new THREE.Group();
+room.position.set(-RX/2, 0, -RZ/2);   // Raum um Ursprung zentrieren
+scene.add(room);
+
+const matWall  = new THREE.MeshStandardMaterial({ color: 0xf2ede4, transparent: true, opacity: 0.30, side: THREE.DoubleSide, depthWrite: false });
+const matFloor = new THREE.MeshStandardMaterial({ color: 0xc9a877 });
+const labels = [], dims = [];
+
+function box(w, h, d, x, y, z, mat, parent = room) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x + w/2, y + h/2, z + d/2);
+  m.castShadow = m.receiveShadow = true;
+  parent.add(m);
+  return m;
+}
+function label(text, x, y, z, assume = false) {
+  const div = document.createElement('div');
+  div.className = 'lbl' + (assume ? ' assume' : '');
+  div.textContent = text;
+  const o = new CSS2DObject(div);
+  o.position.set(x, y, z);
+  room.add(o); labels.push(o);
+}
+function dim(text, ax, ay, az, bx, by, bz, off = [0,0,0]) {
+  const a = new THREE.Vector3(ax+off[0], ay+off[1], az+off[2]);
+  const b = new THREE.Vector3(bx+off[0], by+off[1], bz+off[2]);
+  const line = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([a, b]),
+    new THREE.LineBasicMaterial({ color: 0x1a3a8a }));
+  room.add(line);
+  const div = document.createElement('div');
+  div.className = 'lbl dim'; div.textContent = text;
+  const o = new CSS2DObject(div);
+  o.position.copy(a.clone().add(b).multiplyScalar(.5));
+  room.add(o);
+  dims.push(line, o);
+}
+
+// ---- Boden & Decke
+box(RX, .02, RZ, 0, -.02, 0, matFloor);
+const ceiling = box(RX, .04, RZ, 0, RH, 0,
+  new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: .9 }));
+ceiling.visible = false;
+
+// ---- Wand A (z=0, außen) — volle Länge
+box(RX, RH, T, 0, 0, -T, matWall);
+// ---- Wand B (x=RX)
+box(T, RH, RZ, RX, 0, 0, matWall);
+// ---- Wand C (z=RZ) mit Türöffnung
+box(DOOR_X0, RH, T, 0, 0, RZ, matWall);
+box(RX - DOOR_X0 - DOOR_W, RH, T, DOOR_X0 + DOOR_W, 0, RZ, matWall);
+box(DOOR_W, RH - DOOR_H, T, DOOR_X0, DOOR_H, RZ, matWall);
+// Türblatt (geschlossen in der Öffnung)
+box(DOOR_W, DOOR_H, .04, DOOR_X0, 0, RZ + .04,
+  new THREE.MeshStandardMaterial({ color: 0xb98a55 }));
+label('Tür 95 (Standard)', DOOR_X0 + DOOR_W/2, 1.2, RZ - .1);
+
+// ---- Wand D (x=0) mit Fensteröffnung (Fenster sitzt 22 cm von Wand A: z = WIN_Z0..WIN_Z0+WIN_W)
+box(T, RH, WIN_Z0, -T, 0, 0, matWall);                                  // Streifen zu Wand A
+box(T, RH, RZ - WIN_Z0 - WIN_W, -T, 0, WIN_Z0 + WIN_W, matWall);        // Streifen zu Wand C
+box(T, WIN_SILL, WIN_W, -T, 0, WIN_Z0, matWall);                        // Brüstung
+box(T, RH - WIN_TOP, WIN_W, -T, WIN_TOP, WIN_Z0, matWall);              // Sturz
+box(.205, .03, WIN_W + .06, -.02, WIN_SILL, WIN_Z0 - .03,               // Fensterbank T 20,5
+  new THREE.MeshStandardMaterial({ color: 0xe8e8e8 }));
+box(.02, WIN_TOP - WIN_SILL, WIN_W, -T + .06, WIN_SILL, WIN_Z0,         // Glas (Laibung 17)
+  new THREE.MeshStandardMaterial({ color: 0x9fd8ef, transparent: true, opacity: .35 }));
+label('Fenster 158 (Höhe oben ~245: Video-Schätzung)', .15, 1.9, WIN_Z0 + WIN_W/2, true);
+
+// ---- Schacht Ecke A/B: 15 (x) × 48 (z)
+box(.15, RH, .48, RX - .15, 0, 0, matWall);
+label('Schacht 15×48', RX - .2, 2.0, .55);
+
+// ---- Möbel (Ziel-Layout nach Video-Abgleich 12.06.2026 — Positionen = ENTWURF) ----
+const matWhite = new THREE.MeshStandardMaterial({ color: 0xfafafa });
+const matTurq  = new THREE.MeshStandardMaterial({ color: 0x7fd4c8 });
+const matWood  = new THREE.MeshStandardMaterial({ color: 0xd9b894 });
+const matShelf = new THREE.MeshStandardMaterial({ color: 0xcfe0c3 });
+const matKallax = new THREE.MeshStandardMaterial({ color: 0xe8dcc8 });
+const matSocket = new THREE.MeshStandardMaterial({ color: 0xe8e8e8 });
+
+function rotBox(w, h, d, cx, y, cz, angleDeg, mat, parent = room) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(cx, y + h/2, cz);
+  m.rotation.y = angleDeg * Math.PI / 180;
+  m.castShadow = m.receiveShadow = true;
+  parent.add(m);
+  return m;
+}
+
+// Klappbett an Wand A (Video: hochklappbar, Lattenrost auf Holzbalken, Matratze ~15;
+// hochgeklappt ~160 hoch. Grundfläche ANNAHME 200×120). „Ganz ran" an Wand A,
+// rechtes Ende links neben der Klimmzugstange; Ecke D/A bleibt frei für den Fenster-Schreibtisch.
+const bedX = 1.40, bedL = 2.0, bedW = 1.6;                    // 200×160 (bestätigt)
+box(bedL, .22, bedW, bedX, 0, 0, matWood);                   // Holzbalken + Lattenrost
+box(bedL - .04, .15, bedW - .04, bedX + .02, .22, .02,
+  new THREE.MeshStandardMaterial({ color: 0xdde6f0 }));      // Matratze ~15
+label('Klappbett 200×160 — aufgeklappt. Hochgeklappt: nur ~25 tief, 160 hoch an Wand A', bedX + 1.0, .5, .8);
+
+// 2 Kleiderstangen @270 übers Bett (je ~90, nebeneinander), 30 von Wand A
+const matRail = new THREE.MeshStandardMaterial({ color: 0x884466, metalness: .6, roughness: .3 });
+for (const x0 of [bedX + .05, bedX + 1.0]) {
+  const rail = new THREE.Mesh(new THREE.CylinderGeometry(.015, .015, .9), matRail);
+  rail.rotation.z = Math.PI/2;
+  rail.position.set(x0 + .45, 2.70, .30);
+  room.add(rail);
+  for (const hx of [x0 + .05, x0 + .85])                      // Abhänger zur Decke
+    box(.02, RH - 2.70, .02, hx, 2.70, .29, matRail);
+}
+label('2 Kleiderstangen @270 (links neben Klimmzugstange)', bedX + 1.0, 2.78, .30);
+
+// Großer weißer Schrank an Wand B (100×65×237), nach dem Schacht
+box(.65, 2.37, 1.0, RX - .65, 0, .48, matWhite);
+label('Schrank 100×65×237', RX - .4, 2.45, .98);
+// Spalt 10–20 (Besen/Handfeger) + 2 kleine Regale für Werkzeugkoffer rechts daneben
+box(.4, .04, .35, RX - .4, .45, 1.66, matShelf);
+box(.4, .04, .35, RX - .4, .95, 1.66, matShelf);
+for (const pz of [1.66, 1.99]) box(.02, .95, .02, RX - .4, 0, pz, matShelf);
+label('Spalt 10–20 (Besen) + 2 Regale (Werkzeugkoffer)', RX - .35, 1.25, 1.85, true);
+
+// Klimmzugstange 200 Ø5 (Ziel: parallel statt diagonal — ein Ende auf dem Schrank
+// aufliegend, anderes Ende mit Dübeln an Wand A; Ton 7:20 + 11:33)
+const pull = new THREE.Mesh(
+  new THREE.CylinderGeometry(.025, .025, 2.0),
+  new THREE.MeshStandardMaterial({ color: 0x333333, metalness: .7, roughness: .35 }));
+pull.rotation.x = Math.PI/2;
+pull.position.set(RX - .33, 2.42, 1.0);
+room.add(pull);
+label('Klimmzugstange 200 Ø5 @~240: Dübel Wand A ↔ liegt auf Schrank (Entwurf)', RX - .33, 2.58, .8, true);
+
+// Massageliege geklappt (65 breit, klappbar auf 170) — Platz dafür entsteht, wenn das
+// Bett hochgeklappt ist (Ton 11:33: "zwischen Wand und Schrank, darüber die Klimmzugstange")
+box(.65, 1.70, .30, 2.55, 0, .05, new THREE.MeshStandardMaterial({ color: 0x3a5a7a }));
+label('Massageliege geklappt 65×30 H170 — Platz bei hochgeklapptem Bett (Entwurf)', 2.55, 1.85, .2, true);
+
+// Kallax 4×4 (147×39×147, 16 Fächer) → Ziel: Wand C („kreative Einheit")
+box(1.47, 1.47, .39, .06, 0, RZ - .39, matKallax);
+for (let i = 1; i < 4; i++) {                                  // Fächer-Raster angedeutet
+  box(.01, 1.47, .02, .06 + i * 1.47/4, 0, RZ - .41, matWhite);
+  box(1.47, .01, .02, .06, i * 1.47/4, RZ - .41, matWhite);
+}
+label('Kallax 4×4 147×147×39 — kreative Einheit (Ziel: Wand C)', .8, 1.6, RZ - .2, true);
+// 1-m-Ablage (immer frei) rechts daneben + Sitzmöglichkeit (Box-Workflow)
+box(1.0, .04, .5, 1.6, .75, RZ - .5, matWood);
+for (const [lx, lz] of [[1.62, RZ - .48],[2.54, RZ - .48],[1.62, RZ - .08],[2.54, RZ - .08]])
+  box(.04, .75, .04, lx, 0, lz, matWood);
+box(.42, .45, .42, 1.95, 0, RZ - 1.05, matShelf);
+label('1-m-Ablage (immer frei) + Sitz', 2.1, 1.0, RZ - .3, true);
+
+// Schreibtisch ans Fenster (Wand D): 2 weiße Kommoden ~30° gedreht, Platte um
+// 2 Bretter gekürzt, türkise Kommoden oben — Zickzack-/Eck-Idee (Ton 10:20–11:33, ENTWURF)
+rotBox(.8, .78, .5, .48, 0 + .0, .62, -30, matWhite);
+rotBox(.8, .78, .5, .48, 0 + .0, 1.62, 30, matWhite);
+rotBox(1.0, .04, .5, .50, .78, .62, -30, matWood);
+rotBox(1.0, .04, .5, .50, .78, 1.62, 30, matWood);
+rotBox(.4, .55, .5, .48, .82, .62, -30, matTurq);
+rotBox(.4, .55, .5, .48, .82, 1.62, 30, matTurq);
+label('Fenster-Schreibtisch: 2× weiß 80×50×78 um ~30° gedreht, Platte gekürzt, 2× türkis oben (Zickzack-Entwurf)', .6, 1.5, 1.12, true);
+
+// Heizkörper unter dem Fenster (Video) — von der Ziel-Planung freizuhalten
+box(.09, .5, 1.1, .01, .2, WIN_Z0 + .24, matWhite);
+label('Heizkörper (Video)', .2, .35, WIN_Z0 + .8);
+
+// Bestand: OSB-/Leiterregale in der 60-cm-Nische zwischen Schrank und Tür (Wand C)
+for (const hy of [.4, .9, 1.4, 1.9])
+  box(.55, .03, .3, DOOR_X0 + DOOR_W + .03, hy, RZ - .3, matShelf);
+label('Nische 60: OSB-Regale (Bestand)', DOOR_X0 + DOOR_W + .3, 2.15, RZ - .35);
+
+// Bestand: Spiegel an der Tür („bleibt, funktional")
+box(.4, 1.2, .02, DOOR_X0 + .28, .85, RZ - .03,
+  new THREE.MeshStandardMaterial({ color: 0xbfd9e2, metalness: .5, roughness: .2 }));
+label('Spiegel (bleibt)', DOOR_X0 + .48, 2.12, RZ - .1);
+
+// Elektrik (Video, ±15 cm): Schalter+Steckdose neben Tür · 2× Doppel-Steckdose Wand C ·
+// Steckdose Wand A kniehoch · hohe Dose Wand C (~250)
+box(.08, .16, .03, DOOR_X0 - .14, 1.00, RZ - .03, matSocket);
+box(.12, .07, .03, 1.0, 1.13, RZ - .03, matSocket);
+box(.12, .07, .03, 1.95, 1.13, RZ - .03, matSocket);
+box(.12, .07, .03, RX - 1.0, .32, 0, matSocket);
+box(.12, .07, .03, 3.0, 2.48, RZ - .03, matSocket);
+label('Elektrik lt. Video (Schalter/Steckdosen)', DOOR_X0 - .15, 1.35, RZ - .15);
+
+// ---- Maßketten
+dim('Wand A — 414', 0, 0, 0, RX, 0, 0, [0, .02, -.35]);
+dim('Wand B — 300', RX, 0, 0, RX, 0, RZ, [.35, .02, 0]);
+dim('Wand C — Rest neben Tür: 259', 0, 0, RZ, DOOR_X0, 0, RZ, [0, .02, .35]);
+dim('Wand D — 300', 0, 0, 0, 0, 0, RZ, [-.35, .02, 0]);
+dim('Decke 292', 0, 0, 0, 0, RH, 0, [-.2, 0, -.2]);
+dim('Stange 270', bedX, 0, .3, bedX, 2.7, .3, [-.15, 0, 0]);
+
+// ---- UI
+const byId = id => document.getElementById(id);
+byId('cbDims').onchange  = e => { dims.forEach(o => o.visible = e.target.checked); renderFrame(); };
+byId('cbLabels').onchange = e => { labels.forEach(o => o.visible = e.target.checked); renderFrame(); };
+byId('cbCeil').onchange  = e => { ceiling.visible = e.target.checked; renderFrame(); };
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  labelRenderer.setSize(innerWidth, innerHeight);
+  renderFrame();
+});
+
+// On-Demand-Rendering: nur neu zeichnen, wenn die Kamera bewegt wird (spart Strom/CPU)
+function renderFrame() {
+  renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
+}
+controls.addEventListener('change', renderFrame);
+renderFrame();
+
+// ===== Möbel-Editor: Bausteine hinzufügen · verschieben · um alle Achsen drehen · 90°-Einrasten =====
+
+// Durchsichtige Wände sollen keine harten Schatten mehr werfen
+room.traverse(o => { if (o.isMesh && o.material === matWall) o.castShadow = false; });
+
+const tcontrols = new TransformControls(camera, renderer.domElement);
+tcontrols.setSize(0.9);
+scene.add(tcontrols.getHelper ? tcontrols.getHelper() : tcontrols);   // r166+: getHelper(); r165: das Objekt selbst
+tcontrols.addEventListener('change', renderFrame);
+tcontrols.addEventListener('objectChange', updateSelInfo);
+tcontrols.addEventListener('dragging-changed', e => { controls.enabled = !e.value; });  // Kamera während Gizmo-Zug sperren
+
+const editable = [];
+let selected = null;
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
+let snapOn = true, angleStep = 90;
+function applySnap() {
+  tcontrols.setTranslationSnap(snapOn ? 0.05 : null);                 // 5-cm-Raster beim Verschieben
+  tcontrols.setRotationSnap(snapOn ? THREE.MathUtils.degToRad(angleStep) : null);  // Winkel-Einrasten
+}
+
+const PALETTE = { 'Holz': 0xc59b6c, 'Weiß': 0xf2f2f2, 'Türkis': 0x7fd4c8, 'Grau': 0x9aa3ad, 'Blau': 0x5b8fc7 };
+const clampCm = v => Math.min(400, Math.max(1, Math.round((+v) || 50)));   // gültige Maße: 1..400 cm
+
+function addBlock(wCm, hCm, dCm, colorHex) {
+  const w = wCm/100, h = hCm/100, d = dCm/100;
+  const m = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, d),
+    new THREE.MeshStandardMaterial({ color: colorHex, roughness: .7 }));  // opak → sauber vor/hinter den Glaswänden sortiert
+  // Startposition: Raummitte (room-lokal), je Baustein leicht versetzt (sonst exakt deckungsgleich)
+  const n = editable.length;
+  m.position.set(RX/2 + (n % 5 - 2) * 0.3, h/2 + 0.005, RZ/2 + Math.floor(n / 5) * 0.3);
+  m.castShadow = m.receiveShadow = true;
+  m.userData.name = 'Baustein';
+  m.add(new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry),
+    new THREE.LineBasicMaterial({ color: 0x222831 })));               // Kanten zur besseren Sichtbarkeit
+  const div = document.createElement('div');
+  div.className = 'lbl blk';
+  div.textContent = `${wCm}×${dCm}×${hCm}`;
+  const lbl = new CSS2DObject(div); lbl.position.set(0, h/2 + 0.08, 0);
+  lbl.visible = byId('cbLabels').checked;                             // folgt dem „Beschriftungen“-Schalter
+  m.add(lbl);
+  m.userData.label = lbl;
+  labels.push(lbl);
+  room.add(m);                                                        // gleiche Gruppe wie die Bestandsmöbel → gemeinsames 5-cm-Raster
+  editable.push(m);
+  selectObject(m);
+}
+
+function selectObject(obj) {
+  if (selected && selected.material.emissive) selected.material.emissive.setHex(0x000000);
+  selected = obj;
+  if (obj) { tcontrols.attach(obj); if (obj.material.emissive) obj.material.emissive.setHex(0x2a2f48); }
+  else tcontrols.detach();
+  updateSelInfo();
+  renderFrame();
+}
+
+function deleteSelected() {
+  if (!selected) return;
+  tcontrols.detach();
+  // CSS2D-Label sauber abräumen, sonst bleibt ein Geister-Div an alter Position im Bild hängen
+  const lbl = selected.userData.label;
+  if (lbl) {
+    lbl.removeFromParent();
+    if (lbl.element) lbl.element.remove();
+    const li = labels.indexOf(lbl); if (li >= 0) labels.splice(li, 1);
+  }
+  room.remove(selected);
+  selected.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+  const i = editable.indexOf(selected); if (i >= 0) editable.splice(i, 1);
+  selected = null;
+  updateSelInfo();
+  renderFrame();
+}
+
+function setMode(mode) {
+  tcontrols.setMode(mode);
+  byId('btnMove').classList.toggle('active', mode === 'translate');
+  byId('btnRot').classList.toggle('active', mode === 'rotate');
+  renderFrame();
+}
+
+function updateSelInfo() {
+  const el = byId('selInfo'); if (!el) return;
+  if (!selected) { el.textContent = 'Nichts ausgewählt'; return; }
+  const deg = a => Math.round(THREE.MathUtils.radToDeg(a));
+  const r = selected.rotation;
+  el.textContent = `Ausgewählt · Drehung  X ${deg(r.x)}°  Y ${deg(r.y)}°  Z ${deg(r.z)}°`;
+}
+
+// Klick wählt aus — aber nur echte Klicks, keine Kamera-Drags und keine Gizmo-Bedienung
+let down = null, onGizmo = false;
+renderer.domElement.addEventListener('pointerdown', e => {
+  down = { x: e.clientX, y: e.clientY }; onGizmo = (tcontrols.axis !== null);
+});
+renderer.domElement.addEventListener('pointerup', e => {
+  if (!down) return;
+  const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+  const wasGizmo = onGizmo || tcontrols.dragging; down = null; onGizmo = false;
+  if (moved > 5 || wasGizmo) return;
+  const rect = renderer.domElement.getBoundingClientRect();
+  pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObjects(editable, false);
+  selectObject(hits.length ? hits[0].object : null);
+});
+// Touch-Abbruch (z.B. Mehrfinger/Scroll-Geste): Kamera nie dauerhaft gesperrt lassen + State zurücksetzen
+addEventListener('pointercancel', () => { down = null; onGizmo = false; controls.enabled = true; renderFrame(); });
+// Maustaste außerhalb des Canvas losgelassen: hängenden Klick-State aufräumen
+addEventListener('pointerup', () => { down = null; onGizmo = false; });
+
+byId('btnAdd').onclick = () => addBlock(
+  clampCm(byId('inW').value), clampCm(byId('inH').value), clampCm(byId('inD').value),
+  PALETTE[byId('inColor').value]);
+byId('btnMove').onclick = () => setMode('translate');
+byId('btnRot').onclick  = () => setMode('rotate');
+byId('btnDel').onclick  = deleteSelected;
+byId('cbSnap').onchange = e => { snapOn = e.target.checked; applySnap(); };
+byId('selStep').onchange = e => { angleStep = +e.target.value; applySnap(); };
+
+addEventListener('keydown', e => {
+  if (/^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(e.target.tagName)) return;   // nicht in Formularfeldern/Buttons
+  const k = e.key.toLowerCase();
+  if (k === 'w') setMode('translate');
+  else if (k === 'e') setMode('rotate');
+  else if (e.key === 'Delete') deleteSelected();                          // nur Entf (kein Backspace → kein Versehen)
+  else if (e.key === 'Escape') selectObject(null);
+});
+
+applySnap();
+setMode('translate');
+updateSelInfo();
+</script>
+</body>
+</html>
