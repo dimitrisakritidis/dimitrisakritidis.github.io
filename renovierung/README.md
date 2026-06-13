@@ -1,6 +1,15 @@
 # Projekt: Zimmer-Renovierung — 3D-Modell aus Video
 
-**Für die KI-Session, die das hier liest (Claude / Fable 5):** Dieses Dokument ist deine vollständige Arbeitsanweisung. Arbeite so autonom wie möglich und frag nur nach, wenn du wirklich blockiert bist. Es existiert außerdem eine **`LOG.md`** im selben Drive-Ordner mit dem kompletten bisherigen Chatverlauf — bei Unklarheiten zuerst dort nachlesen, bevor du den User fragst.
+> **STAND 2026-06-13:** Video ist ausgewertet, das 3D-Modell + Grundriss + Maße sind auf dem Ziel-Layout, und `index.html` hat inzwischen einen **Möbel-Editor** (Bausteine, Drehen um alle Achsen, 90°-Snap, durchsichtige Wände). Alles committet & gepusht.
+>
+> **Wenn du als neue Session hier ankommst, arbeite LOKAL** (das löst alle Cloud-Hürden unten in §4/§5) und lies zuerst die Projekt-Doku:
+> - `ARCHITEKTUR.md` (neben dieser Datei) — Code-Karte von `index.html`, **Pflicht vor jedem Code-Eingriff**.
+> - `masse.md` — Maße = Quelle der Wahrheit.
+> - Im Projektordner `D:\Dimi-KI\Zimmer_Renovierung\`: `INDEX.md`, `TODOS.md`, `CHRONIK.md`.
+>
+> **Lokaler Weg (empfohlen):** Repo liegt unter `D:\Dimi-KI\Zimmer_Renovierung\repo`, Video + Frames + Transkript unter `_arbeit/`. WhisperX/ffmpeg in `D:\Miniforge3\envs\whisperx`. Modell ansehen: `python -m http.server` auf `renovierung/` (siehe `INDEX.md`). Der GitHub-Login ist gespeichert → `git push origin claude/3d-room-video-model-tdxrqq` läuft ohne Prompt. Der Drive-MCP-/GitHub-Release-Umweg aus §4/§5 ist lokal **nicht nötig**.
+
+**Für die KI-Session, die das hier liest (Claude / Fable 5):** Dieses Dokument ist die ursprüngliche Arbeitsanweisung der Cloud-Session. Arbeite so autonom wie möglich und frag nur nach, wenn du wirklich blockiert bist. `LOG.md` (selber Ordner) enthält den rekonstruierten Erst-Chatverlauf — **historisch, teils ungenau** (z.B. fehlte dort die Bett-Grundfläche); bei Maßen gilt `masse.md`.
 
 ---
 
