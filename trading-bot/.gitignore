@@ -1,0 +1,12 @@
+# Lokale Config kann API-Keys enthalten -> niemals einchecken
+config.yaml
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.env
+
+# Logs / Laufzeitdaten
+*.log
+state.json

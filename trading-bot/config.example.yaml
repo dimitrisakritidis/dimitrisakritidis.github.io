@@ -1,0 +1,57 @@
+# ============================================================================
+#  Arbitrage Bot — Beispielkonfiguration
+#  Kopiere diese Datei nach config.yaml und passe sie an.
+#  config.yaml ist in .gitignore und wird NICHT eingecheckt (enthält ggf. Keys).
+# ============================================================================
+
+# Betriebsmodus: scan | paper | live
+#   scan  -> nur Kurse vergleichen, nichts handeln (keine API-Keys nötig)
+#   paper -> Trades simulieren mit virtuellem Guthaben
+#   live  -> echtes Geld (API-Keys erforderlich, bewusst einschalten!)
+mode: scan
+
+# Börsen, die verglichen werden. IDs müssen CCXT-Exchange-IDs sein.
+# Beispiele: binance, kraken, coinbase, bitstamp, kucoin, okx, bybit
+exchanges:
+  - id: kraken
+    # Taker-Fee als Dezimalzahl (0.0026 = 0,26 %). Im Zweifel etwas höher ansetzen.
+    taker_fee: 0.0026
+    # API-Keys nur für mode: live nötig. Leer lassen für scan/paper.
+    api_key: ""
+    secret: ""
+  - id: coinbase
+    taker_fee: 0.0060
+    api_key: ""
+    secret: ""
+  - id: bitstamp
+    taker_fee: 0.0040
+    api_key: ""
+    secret: ""
+
+# Handelspaare, die gescannt werden.
+symbols:
+  - BTC/USD
+  - ETH/USD
+
+# Mindest-NETTOPROFIT (nach Abzug der Gebühren beider Seiten), damit ein
+# Trade ueberhaupt in Betracht gezogen wird. 0.002 = 0,2 %.
+min_profit_pct: 0.002
+
+# Maximaler Einsatz pro Trade in Quote-Waehrung (z. B. USD/USDT).
+max_trade_quote: 100.0
+
+# Abfrageintervall in Millisekunden. Zu niedrig => Rate-Limits der Boersen.
+poll_interval_ms: 1500
+
+# Paper-Modus: virtuelles Startguthaben in Quote-Waehrung pro Boerse.
+paper_start_balance: 1000.0
+
+# Sicherheits-Limits (greifen auch live):
+risk:
+  # Maximale Anzahl Trades pro Stunde (Notbremse gegen Fehlerschleifen).
+  max_trades_per_hour: 20
+  # Maximaler kumulierter Verlust pro Tag (Quote-Waehrung), dann Stopp.
+  max_daily_loss_quote: 50.0
+  # Slippage-Puffer: erwarteter Profit wird um diesen Anteil reduziert,
+  # bevor er gegen min_profit_pct geprueft wird (konservativ rechnen).
+  slippage_buffer_pct: 0.0005
