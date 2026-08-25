@@ -106,10 +106,12 @@ h1{font-size:17px; font-weight:650; margin:0; letter-spacing:-.01em; text-wrap:b
 .hint{font-family:var(--mono); font-size:10px; color:var(--ink3)}
 .toggle{display:inline-flex; align-items:center; gap:7px; cursor:pointer; user-select:none}
 .toggle input{accent-color:var(--accent); width:14px; height:14px; margin:0}
-.leg{display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:10.5px; padding:2px 8px; border-radius:99px; border:1px solid var(--border2); background:var(--card)}
-.leg:hover{border-color:var(--accent)}
+.leg{display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:10.5px; padding:2px 4px 2px 8px; border-radius:99px; border:1px solid var(--border2); background:var(--card)}
 .dot{width:8px; height:8px; border-radius:50%; flex:none}
 .dot.rot{background:var(--bad)} .dot.gelb{background:var(--warn-dot); border:1px solid var(--err-gelb-bd)}
+.nav{width:20px; height:20px; border-radius:6px; border:1px solid var(--border2); background:var(--surface);
+  display:inline-flex; align-items:center; justify-content:center; font-size:9px; color:var(--ink2); margin-left:1px}
+.nav:hover{border-color:var(--accent); color:var(--accent)}
 .progress{font-family:var(--mono); font-size:11px; margin-left:auto; display:flex; align-items:center; gap:8px}
 .pbar{width:110px; height:4px; border-radius:99px; background:var(--surface2); overflow:hidden}
 .pbar i{display:block; height:100%; background:var(--ok); width:0; transition:width .3s}
@@ -176,6 +178,8 @@ mark.err.gelb{background:var(--err-gelb-bg); border-color:var(--err-gelb-bd)}
 .item.pinned{border-color:var(--accent)}
 .item.st-ok{box-shadow:inset 3px 0 0 var(--ok)}
 .item.st-changed{box-shadow:inset 3px 0 0 var(--bad)}
+.item.st-deleted{opacity:.45}
+.item.st-deleted .i-text{text-decoration:line-through}
 .item .i-top{display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:3px}
 .badge{font-family:var(--mono); font-size:9.5px; font-weight:600; letter-spacing:.05em; padding:1.5px 7px; border-radius:99px; border:1px solid var(--border2); color:var(--ink2)}
 .badge.owner-Nico{color:var(--nico); border-color:var(--nico)}
@@ -193,15 +197,23 @@ mark.err.gelb{background:var(--err-gelb-bg); border-color:var(--err-gelb-bd)}
 .item .i-actions{position:absolute; top:7px; right:8px; display:flex; gap:4px}
 .act{width:24px; height:24px; border-radius:6px; border:1px solid var(--border2); background:var(--surface);
   display:inline-flex; align-items:center; justify-content:center; font-size:12.5px; line-height:1; color:var(--ink3)}
+.act svg{width:12px; height:12px}
 .act:hover{border-color:var(--accent); color:var(--accent)}
 .act.on-ok{background:var(--ok-soft); border-color:var(--ok); color:var(--ok)}
 .act.on-bad{background:var(--bad-soft); border-color:var(--bad); color:var(--bad)}
-.editor{margin-top:7px; display:flex; flex-direction:column; gap:6px}
+.editor{margin-top:7px; display:flex; flex-direction:column; gap:6px; min-width:0}
 .editor textarea{
-  width:100%; min-height:64px; resize:vertical; border:1px solid var(--border2); border-radius:7px;
+  width:100%; min-height:60px; resize:vertical; border:1px solid var(--border2); border-radius:7px;
   background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:12.5px; padding:7px 9px;
 }
-.editor .e-row{display:flex; gap:6px; justify-content:flex-end}
+.editor .e-row{display:flex; gap:6px; align-items:center; flex-wrap:wrap}
+.editor .e-row .hint{margin-right:auto}
+.e-owner{display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink2)}
+.sel{font-family:var(--mono); font-size:11px; background:var(--card); color:var(--ink);
+  border:1px solid var(--border2); border-radius:6px; padding:3px 6px}
+.confirm{display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:7px; font-size:12px}
+.btn.danger{background:var(--bad); border-color:var(--bad); color:#fff}
+.btn.danger:hover{filter:brightness(1.08); color:#fff}
 .mailbody{font-size:12.5px; white-space:pre-wrap; background:var(--surface); border:1px solid var(--border);
   border-radius:7px; padding:9px 11px; margin-top:6px; color:var(--ink2); max-height:230px; overflow-y:auto}
 
@@ -238,6 +250,7 @@ table.review td.type{font-family:var(--mono); font-size:10.5px; color:var(--ink2
 .st{font-family:var(--mono); font-size:10px; font-weight:600; padding:1.5px 8px; border-radius:99px; white-space:nowrap}
 .st.ok{color:var(--ok); background:var(--ok-soft)}
 .st.changed{color:var(--bad); background:var(--bad-soft)}
+.st.deleted{color:var(--ink2); background:var(--surface2); text-decoration:line-through}
 .st.open{color:var(--ink3); background:var(--surface2)}
 .diff del{color:var(--bad); background:var(--bad-soft); text-decoration:line-through; border-radius:3px; padding:0 2px}
 .diff ins{color:var(--ok); background:var(--ok-soft); text-decoration:none; border-radius:3px; padding:0 2px}
@@ -245,6 +258,39 @@ table.review td.type{font-family:var(--mono); font-size:10.5px; color:var(--ink2
 .panel-foot .note{font-size:11.5px; color:var(--ink3); margin-left:auto}
 #exportBox{width:100%; min-height:130px; font-family:var(--mono); font-size:11px; background:var(--surface);
   color:var(--ink); border:1px solid var(--border2); border-radius:8px; padding:10px; margin-top:10px; display:none}
+
+/* ---------- start screen ---------- */
+#viewMeeting{flex:1; min-height:0; display:flex; flex-direction:column}
+#viewStart{flex:1; min-height:0; overflow-y:auto; background:var(--bg)}
+.start-inner{max-width:860px; margin:0 auto; padding:44px 24px 90px; display:flex; flex-direction:column; gap:28px}
+.start-head{display:flex; align-items:flex-start; gap:12px}
+.start-head .themeBtn{margin-left:auto}
+.start-title{font-size:29px; font-weight:650; letter-spacing:-.02em; margin:4px 0 4px; text-wrap:balance}
+.start-sub{color:var(--ink2); margin:0; font-size:14.5px; max-width:56ch}
+.s-label{font-family:var(--mono); font-size:10.5px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--ink2); margin-bottom:9px}
+.ws-row,.team-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(235px,1fr)); gap:10px}
+.ws-card{display:flex; align-items:center; gap:12px; border:1px solid var(--border); background:var(--card);
+  border-radius:12px; padding:14px 16px; text-align:left}
+.ws-card.active{border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent)}
+.ws-card.ghost{border-style:dashed; color:var(--ink3); background:none; cursor:not-allowed}
+.ws-dot{width:34px; height:34px; border-radius:50%; background:var(--accent); flex:none;
+  display:flex; align-items:center; justify-content:center; color:#fff; font-family:var(--mono); font-weight:600; font-size:13px}
+.ws-meta{display:block; font-family:var(--mono); font-size:10px; color:var(--ink3); margin-top:2px}
+.tm{display:flex; align-items:center; gap:12px; border:1px solid var(--border); background:var(--card);
+  border-radius:12px; padding:13px 15px; text-align:left; cursor:pointer}
+.tm:hover{border-color:var(--accent)}
+.tm .ava{width:34px; height:34px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center;
+  color:#fff; font-weight:650; font-size:14px}
+.tm .role{display:block; font-size:11.5px; color:var(--ink2); margin-top:1px}
+.tm .tm-count{display:block; font-family:var(--mono); font-size:10px; color:var(--accent); margin-top:3px}
+.mt-card{display:flex; align-items:center; gap:14px; width:100%; border:1px solid var(--border); background:var(--card);
+  border-radius:12px; padding:15px 17px; text-align:left; cursor:pointer; flex-wrap:wrap}
+.mt-card:hover{border-color:var(--accent)}
+.mt-date{font-family:var(--mono); font-size:10.5px; color:var(--accent); font-weight:600}
+.mt-title{font-weight:650; font-size:14.5px; margin-top:2px}
+.mt-meta{font-family:var(--mono); font-size:10px; color:var(--ink3); margin-top:3px}
+.mt-open{margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--accent); white-space:nowrap}
+.s-note{font-size:12px; color:var(--ink3); margin:0}
 
 /* ---------- footer hint ---------- */
 .foot{
@@ -259,7 +305,54 @@ table.review td.type{font-family:var(--mono); font-size:10.5px; color:var(--ink2
 }
 </style>
 
+<div id="viewStart">
+  <div class="start-inner">
+    <div class="start-head">
+      <div>
+        <span class="eyebrow">Solution Business · Protokollant</span>
+        <h1 class="start-title">Meeting-Auswertung</h1>
+        <p class="start-sub">Transkripte in vier Ebenen prüfen, To-dos absegnen oder abändern — und den Protokollanten mit jeder Prüfung besser machen.</p>
+      </div>
+      <button class="btn themeBtn" aria-label="Farbschema wechseln">◐ Theme</button>
+    </div>
+    <div class="s-section">
+      <div class="s-label">Workspace</div>
+      <div class="ws-row">
+        <div class="ws-card active"><span class="ws-dot">SB</span>
+          <div><b>SOLUTION BUSINESS</b><span class="ws-meta">3 Mitglieder · 1 Meeting</span></div></div>
+        <div class="ws-card ghost"><span class="ws-dot" style="background:var(--surface2); color:var(--ink3)">+</span>
+          <div>Account anlegen<span class="ws-meta">z. B. Haraka UG — kommt mit Server-Login</span></div></div>
+      </div>
+    </div>
+    <div class="s-section">
+      <div class="s-label">Team &amp; Verantwortung</div>
+      <div class="team-row">
+        <button class="tm" data-owner="Dimi"><span class="ava" style="background:var(--dimi)">D</span>
+          <span><b>Dimi</b><span class="role">Recht &amp; Verträge · Workspace-Struktur</span><span class="tm-count" id="tm-count-Dimi"></span></span></button>
+        <button class="tm" data-owner="Nico"><span class="ava" style="background:var(--nico)">N</span>
+          <span><b>Nico</b><span class="role">Module &amp; Integrationen (Lexware, Rechnung)</span><span class="tm-count" id="tm-count-Nico"></span></span></button>
+        <button class="tm" data-owner="Leon"><span class="ava" style="background:var(--ok)">L</span>
+          <span><b>Leon</b><span class="role">Recht &amp; Buchhaltung · im Urlaub bis 01.09.</span><span class="tm-count" id="tm-count-Leon"></span></span></button>
+        <button class="tm" data-owner="Team"><span class="ava" style="background:var(--spk-unk)">∗</span>
+          <span><b>Team</b><span class="role">Gemeinsame Aufgaben</span><span class="tm-count" id="tm-count-Team"></span></span></button>
+      </div>
+    </div>
+    <div class="s-section">
+      <div class="s-label">Meetings</div>
+      <button class="mt-card" id="openMeeting">
+        <span><span class="mt-date">MO 24.08.2026 · 21:16</span>
+          <span class="mt-title" style="display:block">Nico nach Jamal — Modul-Landkarte &amp; Vertragsreihenfolge</span>
+          <span class="mt-meta">2:00:19 · 14 Kapitel · 46 Ableitungen · <span id="startProg">0/46 geprüft</span></span></span>
+        <span class="mt-open">Öffnen ⟶</span>
+      </button>
+    </div>
+    <p class="s-note">Login &amp; getrennte Accounts folgen mit der Server-Version — dieser Start ist die funktionierende Vorschau. Klick auf ein Teammitglied öffnet das Meeting mit dessen To-dos.</p>
+  </div>
+</div>
+
+<div id="viewMeeting" style="display:none">
 <header class="app">
+  <button class="btn" id="backBtn" title="Zur Startseite">←</button>
   <div class="brand">
     <span class="eyebrow">Solution Business · Protokollant</span>
     <h1 id="mTitle"></h1>
@@ -269,7 +362,7 @@ table.review td.type{font-family:var(--mono); font-size:10.5px; color:var(--ink2
   <div class="hdr-actions">
     <span class="chip demo">Demo-Daten · Timestamps simuliert</span>
     <button class="btn" id="reviewBtn">Auswertung <span id="reviewCountBtn"></span></button>
-    <button class="btn" id="themeBtn" aria-label="Farbschema wechseln">◐ Theme</button>
+    <button class="btn themeBtn" aria-label="Farbschema wechseln">◐ Theme</button>
   </div>
 </header>
 
@@ -285,8 +378,12 @@ table.review td.type{font-family:var(--mono); font-size:10.5px; color:var(--ink2
     <span class="hint" id="audioHint"></span>
   </div>
   <div class="legend">
-    <button class="leg" id="legRot" title="Zur nächsten wichtigen Auffälligkeit springen"><span class="dot rot"></span> <span id="cntRot">0</span> wichtig</button>
-    <button class="leg" id="legGelb" title="Zur nächsten unwichtigen Auffälligkeit springen"><span class="dot gelb"></span> <span id="cntGelb">0</span> unwichtig</button>
+    <span class="leg"><span class="dot rot"></span> <span id="cntRot">0</span> wichtig
+      <button class="nav" data-err="rot" data-dir="-1" title="Vorherige wichtige Stelle">▲</button>
+      <button class="nav" data-err="rot" data-dir="1" title="Nächste wichtige Stelle">▼</button></span>
+    <span class="leg"><span class="dot gelb"></span> <span id="cntGelb">0</span> unwichtig
+      <button class="nav" data-err="gelb" data-dir="-1" title="Vorherige unwichtige Stelle">▲</button>
+      <button class="nav" data-err="gelb" data-dir="1" title="Nächste unwichtige Stelle">▼</button></span>
     <span style="font-size:11px">= vermutete Transkriptionsfehler</span>
   </div>
   <div class="progress">
@@ -310,7 +407,11 @@ table.review td.type{font-family:var(--mono); font-size:10.5px; color:var(--ink2
       <div class="col-body" id="colE2"></div>
     </section>
     <section class="col" aria-label="E3 Ableitungen">
-      <div class="col-head"><span class="lvl">E3</span><span class="name">Ableitungen</span><span class="count" id="cnt3"></span></div>
+      <div class="col-head"><span class="lvl">E3</span><span class="name">Ableitungen</span>
+        <select id="ownerFilter" class="sel" title="To-dos nach Zuständigkeit filtern" style="margin-left:6px">
+          <option value="">Alle</option><option>Nico</option><option>Dimi</option><option>Leon</option><option>Team</option>
+        </select>
+        <span class="count" id="cnt3"></span></div>
       <div class="col-body" id="colE3"></div>
     </section>
   </div>
@@ -318,7 +419,9 @@ table.review td.type{font-family:var(--mono); font-size:10.5px; color:var(--ink2
 
 <div class="foot">
   <span><b>Bedienung:</b> Hover verknüpft die Ebenen · Klick pinnt 7 s &amp; scrollt die anderen Spalten mit</span>
+  <span><b>E3:</b> ✓ absegnen · 💬 abändern · ✕ löschen (mit Bestätigung)</span>
   <span><b>Prüfstatus</b> wird lokal im Browser gespeichert · Export über „Auswertung“</span>
+</div>
 </div>
 
 <div id="tip" role="tooltip"></div>
@@ -360,13 +463,30 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* ---------------- theme ---------------- */
 let storedTheme = null; try { storedTheme = localStorage.getItem('sb-theme'); } catch(e){}
 if (storedTheme === 'dark' || storedTheme === 'light') document.documentElement.dataset.theme = storedTheme;
-$('#themeBtn').addEventListener('click', () => {
+document.querySelectorAll('.themeBtn').forEach(b => b.addEventListener('click', () => {
   const cur = document.documentElement.dataset.theme ||
     (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   const next = cur === 'dark' ? 'light' : 'dark';
   document.documentElement.dataset.theme = next;
   try { localStorage.setItem('sb-theme', next); } catch(e){}
-});
+}));
+
+/* ---------------- views ---------------- */
+function showView(v){
+  $('#viewStart').style.display = v==='start' ? '' : 'none';
+  $('#viewMeeting').style.display = v==='meeting' ? 'flex' : 'none';
+  const want = v==='meeting' ? '#meeting' : '#start';
+  if (location.hash !== want){ try { history.replaceState(null,'',want); } catch(e){ location.hash = want; } }
+}
+$('#backBtn').addEventListener('click', ()=>showView('start'));
+$('#openMeeting').addEventListener('click', ()=>showView('meeting'));
+document.querySelectorAll('.tm').forEach(t=>t.addEventListener('click', ()=>{
+  showView('meeting');
+  $('#ownerFilter').value = t.dataset.owner;
+  applyOwnerFilter();
+  $('#colE3').scrollTop = 0;
+}));
+showView(location.hash === '#meeting' ? 'meeting' : 'start');
 
 /* ---------------- indexes ---------------- */
 const segs = DATA.segments, units = DATA.units, chaps = DATA.chapters;
@@ -445,7 +565,7 @@ $('#colE2').innerHTML = chaps.map((c,i)=>{
 
 function itemBadges(it){
   const b=[];
-  if(it.type==='todo'){ b.push(`<span class="badge owner-${esc(it.owner)}">${esc(it.owner)}</span>`,
+  if(it.type==='todo'){ b.push(`<span class="badge owner-${esc(it.owner)}" data-owner-badge>${esc(it.owner)}</span>`,
     `<span class="badge prio-${esc(it.prio)}">${esc(it.prio)}</span>`); }
   if(it.type==='termin') b.push(`<span class="badge when">${esc(it.when)}</span>`);
   if(it.type==='mail') b.push(`<span class="badge when">an ${esc(it.to)}</span>`);
@@ -467,8 +587,9 @@ $('#colE3').innerHTML = E3GROUPS.map(([key,label])=>{
         <div class="i-top">${itemBadges(it)}</div>${itemBody(it)}
         <div class="i-refs">${refs}</div>
         <div class="i-actions">
-          <button class="act a-ok" data-act="ok" title="Absegnen (Haken)">✓</button>
-          <button class="act a-bad" data-act="change" title="Verändern &amp; markieren (Kreuz)">✕</button>
+          <button class="act a-ok" data-act="ok" title="Absegnen">✓</button>
+          <button class="act a-edit" data-act="change" title="Abändern / Kommentar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+          <button class="act a-del" data-act="del" title="Löschen (mit Bestätigung)">✕</button>
         </div></div>`;
     }).join('') + '</div>';
 }).join('');
@@ -573,17 +694,18 @@ document.addEventListener('mouseover', ev=>{
   tip.style.left = Math.max(8,x)+'px'; tip.style.top = Math.max(8,y)+'px';
 });
 
-const errMarks = sev => [...document.querySelectorAll(`mark.err.${sev}`)];
-const errPos = { rot:-1, gelb:-1 };
-function jumpErr(sev){
-  const list = errMarks(sev); if(!list.length) return;
-  errPos[sev] = (errPos[sev]+1) % list.length;
-  const m = list[errPos[sev]];
-  const row = m.closest('.row');
-  scrollColTo(row); pin(row);
+function jumpErr(sev, dir){
+  const rows = [...document.querySelectorAll(`mark.err.${sev}`)].map(m=>m.closest('.row'));
+  if(!rows.length) return;
+  const col = $('#colE0');
+  const center = col.scrollTop + col.clientHeight/2;
+  let target = null;
+  if (dir > 0){ target = rows.find(r=>r.offsetTop > center + 10) || rows[0]; }
+  else { target = [...rows].reverse().find(r=>r.offsetTop + r.offsetHeight < center - 10) || rows[rows.length-1]; }
+  scrollColTo(target); pin(target);
 }
-$('#legRot').addEventListener('click', ()=>jumpErr('rot'));
-$('#legGelb').addEventListener('click', ()=>jumpErr('gelb'));
+document.querySelectorAll('.nav[data-err]').forEach(b=>
+  b.addEventListener('click', ()=>jumpErr(b.dataset.err, parseInt(b.dataset.dir))));
 
 /* ---------------- review state ---------------- */
 const LS_KEY = 'sb-review-' + DATA.meta.id;
@@ -591,31 +713,65 @@ let review = {}; try { review = JSON.parse(localStorage.getItem(LS_KEY)||'{}'); 
 function saveReview(){ try { localStorage.setItem(LS_KEY, JSON.stringify(review)); } catch(e){} }
 const origText = it => it.type==='termin' ? `${it.title} — ${it.details} (${it.when})`
   : it.type==='mail' ? `Betreff: ${it.subject}\n\n${it.body}` : it.text;
+const OWNERS = ['Nico','Dimi','Leon','Team'];
+const currentOwner = it => review[it._id]?.owner || it.owner;
+
+function applyOwnerFilter(){
+  const v = $('#ownerFilter').value;
+  for (const it of items){
+    if (it.type!=='todo') continue;
+    const el = document.getElementById(it._el); if(!el) continue;
+    el.style.display = (!v || currentOwner(it)===v) ? '' : 'none';
+  }
+}
+$('#ownerFilter').addEventListener('change', applyOwnerFilter);
 
 function applyReviewUI(){
   let done = 0;
+  const openByOwner = {Nico:0, Dimi:0, Leon:0, Team:0};
   for (const it of items){
     const el = document.getElementById(it._el); if(!el) continue;
     const st = review[it._id];
-    el.classList.toggle('st-ok', st?.status==='ok');
-    el.classList.toggle('st-changed', st?.status==='changed');
-    el.querySelector('.a-ok').classList.toggle('on-ok', st?.status==='ok');
-    el.querySelector('.a-bad').classList.toggle('on-bad', st?.status==='changed');
+    const status = st?.status || null;
+    el.classList.toggle('st-ok', status==='ok');
+    el.classList.toggle('st-changed', status==='changed');
+    el.classList.toggle('st-deleted', status==='deleted');
+    el.querySelector('.a-ok').classList.toggle('on-ok', status==='ok');
+    el.querySelector('.a-edit').classList.toggle('on-bad', status==='changed');
+    const del = el.querySelector('.a-del');
+    del.classList.toggle('on-bad', status==='deleted');
+    del.textContent = status==='deleted' ? '↺' : '✕';
+    del.title = status==='deleted' ? 'Wiederherstellen' : 'Löschen (mit Bestätigung)';
     const txtEl = el.querySelector('.i-text');
-    if (st?.status==='changed' && st.text && it.type!=='mail' && it.type!=='termin')
+    if (status==='changed' && st.text && it.type!=='mail' && it.type!=='termin')
       txtEl.innerHTML = `<span class="human">${esc(st.text)}</span>`;
-    else if (st?.status==='changed' && st.text)
+    else if (status==='changed' && st.text)
       txtEl.innerHTML = `<span class="human">${esc(st.text.split('\n')[0])}</span>`;
     else txtEl.innerHTML = it.type==='termin' ? `<b>${esc(it.title)}</b> — ${esc(it.details)}`
       : it.type==='mail' ? `<b>${esc(it.subject)}</b>` : esc(it.text);
+    if (it.type==='todo'){
+      const b = el.querySelector('[data-owner-badge]');
+      const ow = currentOwner(it);
+      b.textContent = ow + (st?.owner && st.owner!==it.owner ? ' ↪' : '');
+      b.className = 'badge owner-'+ow;
+      b.setAttribute('data-owner-badge','');
+      if (!st) openByOwner[ow] = (openByOwner[ow]||0)+1;
+    }
     if (st) done++;
   }
   $('#progText').textContent = `${done}/${items.length} geprüft`;
   $('#progBar').style.width = items.length ? (100*done/items.length)+'%' : '0%';
   $('#reviewCountBtn').textContent = done ? `(${done})` : '';
+  for (const ow of OWNERS){
+    const el = document.getElementById('tm-count-'+ow);
+    if (el) el.textContent = `${openByOwner[ow]||0} offene To-dos`;
+  }
+  const sp = document.getElementById('startProg');
+  if (sp) sp.textContent = `${done}/${items.length} geprüft`;
+  applyOwnerFilter();
 }
 
-function closeEditors(){ document.querySelectorAll('.editor').forEach(e=>e.remove()); }
+function closeEditors(){ document.querySelectorAll('.editor, .confirm').forEach(e=>e.remove()); }
 $('#colE3').addEventListener('click', ev=>{
   const btn = ev.target.closest('.act'); if(!btn) return;
   ev.stopPropagation();
@@ -625,24 +781,60 @@ $('#colE3').addEventListener('click', ev=>{
     if (review[it._id]?.status==='ok') delete review[it._id];
     else review[it._id] = { status:'ok', at:new Date().toISOString() };
     saveReview(); applyReviewUI();
+  } else if (btn.dataset.act==='del'){
+    if (review[it._id]?.status==='deleted'){ delete review[it._id]; saveReview(); applyReviewUI(); return; }
+    if (card.querySelector('.confirm')){ closeEditors(); return; }
+    closeEditors();
+    const cf = document.createElement('div'); cf.className='confirm';
+    cf.innerHTML = `<span>Wirklich löschen?</span>
+      <button class="btn danger" data-cf="yes">Ja, löschen</button>
+      <button class="btn" data-cf="no">Abbrechen</button>`;
+    card.appendChild(cf);
+    cf.querySelector('[data-cf="yes"]').focus();
+    cf.addEventListener('click', e2=>{
+      e2.stopPropagation();
+      const a = e2.target.closest('[data-cf]'); if(!a) return;
+      if (a.dataset.cf==='yes'){
+        review[it._id] = { status:'deleted', at:new Date().toISOString() };
+        saveReview(); applyReviewUI();
+      }
+      cf.remove();
+    });
   } else {
     if (card.querySelector('.editor')){ closeEditors(); return; }
     closeEditors();
     const cur = review[it._id]?.text || origText(it);
     const ed = document.createElement('div'); ed.className='editor';
+    const ownerSel = it.type==='todo'
+      ? `<label class="e-owner">Zuständig:
+           <select class="sel">${OWNERS.map(o=>`<option${o===currentOwner(it)?' selected':''}>${o}</option>`).join('')}</select>
+         </label>` : '';
     ed.innerHTML = `<textarea aria-label="Menschliche Abänderung">${esc(cur)}</textarea>
-      <div class="e-row"><button class="btn" data-ed="cancel">Abbrechen</button>
-      <button class="btn primary" data-ed="save">Als Abänderung speichern</button></div>`;
+      ${ownerSel}
+      <div class="e-row"><span class="hint">Enter = speichern · Shift+Enter = neue Zeile</span>
+      <button class="btn" data-ed="cancel">Abbrechen</button>
+      <button class="btn primary" data-ed="save">Speichern</button></div>`;
     card.appendChild(ed);
-    ed.querySelector('textarea').focus();
+    const ta = ed.querySelector('textarea');
+    ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+    const doSave = ()=>{
+      const txt = ta.value.trim();
+      const sel = ed.querySelector('.e-owner select');
+      const rec = { status:'changed', at:new Date().toISOString() };
+      if (txt && txt !== origText(it)) rec.text = txt;
+      if (sel && sel.value !== it.owner) rec.owner = sel.value;
+      if (rec.text || rec.owner) review[it._id] = rec;
+      else if (review[it._id]?.status==='changed') delete review[it._id];
+      saveReview(); applyReviewUI(); closeEditors();
+    };
+    ta.addEventListener('keydown', e2=>{
+      if (e2.key==='Enter' && !e2.shiftKey){ e2.preventDefault(); doSave(); }
+      if (e2.key==='Escape') closeEditors();
+    });
     ed.addEventListener('click', e2=>{
       e2.stopPropagation();
       const a = e2.target.closest('[data-ed]'); if(!a) return;
-      if (a.dataset.ed==='save'){
-        review[it._id] = { status:'changed', text: ed.querySelector('textarea').value.trim(), at:new Date().toISOString() };
-        saveReview(); applyReviewUI();
-      }
-      closeEditors();
+      if (a.dataset.ed==='save') doSave(); else closeEditors();
     });
   }
 });
@@ -668,20 +860,25 @@ function diffWords(a,b){
 /* ---------------- overlay / export ---------------- */
 const TYPE_LABEL = { todo:'To-do', termin:'Termin', idee:'Idee', info:'Info-Update', mail:'E-Mail' };
 function buildReview(){
-  let ok=0, ch=0, open=0;
+  let ok=0, ch=0, del=0, open=0;
   $('#reviewRows').innerHTML = items.map(it=>{
     const st = review[it._id];
     const status = st?.status || 'open';
-    if(status==='ok') ok++; else if(status==='changed') ch++; else open++;
+    if(status==='ok') ok++; else if(status==='changed') ch++; else if(status==='deleted') del++; else open++;
     const orig = origText(it);
+    const ownerLine = (st?.owner && st.owner!==it.owner)
+      ? `<div style="margin-top:4px"><span class="badge owner-${esc(it.owner)}">${esc(it.owner)}</span> → <span class="badge owner-${esc(st.owner)}">${esc(st.owner)}</span> (Zuständigkeit verschoben)</div>` : '';
     const right = status==='changed'
-      ? `<div class="diff">${diffWords(orig, st.text||'')}</div>`
-      : status==='ok' ? '<span style="opacity:.5">übernommen wie vorgeschlagen</span>' : '<span style="opacity:.4">–</span>';
+      ? `${st.text ? `<div class="diff">${diffWords(orig, st.text)}</div>` : '<span style="opacity:.5">Text unverändert</span>'}${ownerLine}`
+      : status==='ok' ? '<span style="opacity:.5">übernommen wie vorgeschlagen</span>'
+      : status==='deleted' ? '<span style="opacity:.6">vom Prüfer verworfen</span>' : '<span style="opacity:.4">–</span>';
+    const stLabel = status==='ok' ? '✓ abgesegnet' : status==='changed' ? '✎ geändert'
+      : status==='deleted' ? '✕ verworfen' : 'offen';
     return `<tr><td class="type">${TYPE_LABEL[it.type]}</td><td style="max-width:330px">${esc(orig).slice(0,600)}</td>
-      <td><span class="st ${status}">${status==='ok'?'✓ abgesegnet':status==='changed'?'✕ geändert':'offen'}</span></td>
+      <td><span class="st ${status}">${stLabel}</span></td>
       <td style="max-width:330px">${right}</td></tr>`;
   }).join('');
-  $('#reviewSub').textContent = `${ok} abgesegnet · ${ch} geändert · ${open} offen`;
+  $('#reviewSub').textContent = `${ok} abgesegnet · ${ch} geändert · ${del} verworfen · ${open} offen`;
 }
 function exportJSON(){
   return JSON.stringify({
@@ -691,8 +888,10 @@ function exportJSON(){
       const st = review[it._id];
       return { id: it._id, type: it.type, segIds: it.segIds||[],
         claudeProposal: origText(it),
+        ownerProposed: it.type==='todo' ? it.owner : undefined,
         decision: st?.status || 'open',
-        humanVersion: st?.status==='changed' ? st.text : null,
+        humanVersion: st?.status==='changed' && st.text ? st.text : null,
+        ownerHuman: st?.owner || null,
         reviewedAt: st?.at || null };
     }),
   }, null, 2);

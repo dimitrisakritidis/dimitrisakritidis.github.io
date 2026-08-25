@@ -74,9 +74,41 @@ Alle Querverweise laufen über Segment-IDs — Hover/Pin/Audio brauchen keine we
 Damit lässt sich pro Meeting auswerten, wo Mensch und Protokollant auseinanderlagen —
 die Basis für das Lern-Gedächtnis des Agents.
 
+## Anbindung Notion + Drive — Blaupause (für Nico)
+
+Ziel: Absegnungen/Abänderungen fließen automatisch zurück zu Claude und landen in
+einer Notion-Datenbank mit Drive-Backup, aus der der Protokollant lernt.
+
+**Minimaler Aufbau (empfohlen als V2):**
+
+1. **Endpoint statt localStorage.** Kleiner Server-Endpoint (oder n8n/Make-Webhook)
+   `POST /api/review` nimmt das Lektionen-JSON entgegen (Format unten, identisch mit
+   dem heutigen Export). Im Frontend wird aus dem „Auswertung“-Export ein automatischer
+   `fetch()` bei jedem Speichern — die Seite ist dafür schon strukturiert
+   (`exportJSON()` liefert das komplette Objekt).
+2. **Notion-Datenbank „Protokollant-Lektionen“** (per Notion-API befüllt), Spalten:
+   `Meeting` (Relation/Text) · `Typ` (Select: todo/termin/idee/info/mail) ·
+   `Claude-Vorschlag` (Text) · `Entscheidung` (Select: ok/changed/deleted/open) ·
+   `Menschliche Fassung` (Text) · `Owner Vorschlag`/`Owner Mensch` (Select) ·
+   `Belegstellen` (Text, segIds) · `Geprüft am` (Date) · `Lektion` (Text, von Claude befüllt).
+3. **Drive-Backup:** derselbe Webhook legt das rohe JSON zusätzlich als Datei in
+   `Drive/Protokollant/reviews/<meeting-id>/<timestamp>.json` ab.
+4. **Lern-Schritt:** Ein Claude-Job (Claude Code Session oder API-Cron) liest neue
+   Zeilen mit `Entscheidung ∈ {changed, deleted}`, formuliert je eine „Lektion“
+   (Was war der Unterschied? Welche Regel folgt daraus?) und schreibt sie in die
+   Spalte `Lektion`. Diese Lektionen werden dem Protokollanten beim nächsten Meeting
+   als Kontext mitgegeben.
+5. **Zuweisungs-Lernen:** `ownerProposed` ≠ `ownerHuman` ist das Signal „falscher
+   Ansprechpartner“ — daraus entsteht pro Person ein Zuständigkeitsprofil.
+
+Claude hat in Claude-Code-Sessions direkten Notion- und Drive-Zugriff (MCP-Connectoren) —
+die Datenbank aus Schritt 2 kann Claude auf Zuruf selbst anlegen.
+
 ## Nächste Ausbaustufen (nicht Teil von V1)
 
 - Echte WhisperX-Timestamps statt Simulation
-- Review-Stand serverseitig statt `localStorage` (Team-Sync), Anbindung Notion-Datenbank
+- Echter Login / Accounts pro Mandant (z. B. Haraka UG) auf dem Server —
+  der Startbildschirm ist dafür die UI-Vorlage
+- Review-Stand serverseitig statt `localStorage` (Team-Sync), Anbindung wie oben
 - Automatischer Lektionen-Abgleich über mehrere Meetings
 - E-Mail-Nachbereitung nach Schema X bei externen Meetings
