@@ -16,8 +16,11 @@ Vier-Ebenen-Auswertung eines Meeting-Transkripts als eigenständige HTML-Seite
 
 - **Hover** über eine Textstelle hebt die verknüpften Stellen in allen vier Spalten hervor.
 - **Klick** pinnt die Hervorhebung für 7 Sekunden und scrollt die anderen Spalten zur Stelle.
-- **Audio laden** (lokale Datei, verlässt den Rechner nicht): Klick auf eine Zeile springt
-  an den *Beginn der Aussage* in der Aufnahme (Schalter „Klick → Audio-Sprung“).
+- **Audio**: Die Seite lädt die Aufnahme automatisch von `meta.audioUrl`
+  (Standard: `audio/<meeting-id>.m4a` neben der Seite — Datei dort ablegen, fertig).
+  Fehlt sie, erscheint der Fallback „Audio laden“ (lokale Datei, verlässt den Rechner
+  nicht). Klick auf eine Zeile springt an den *Beginn der Aussage*
+  (Schalter „Klick → Audio-Sprung“).
 - **E3-Prüfung**: ✓ = absegnen, ✕ = abändern (öffnet ein Textfeld). Der Stand wird pro
   Browser in `localStorage` gehalten.
 - **Auswertung**: Gegenüberstellung Claude-Vorschlag ↔ menschliche Fassung mit Wort-Diff,
