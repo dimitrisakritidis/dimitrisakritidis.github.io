@@ -1,0 +1,53 @@
+{
+  "_hinweis": "Keys stehen NICHT in dieser Datei. Jeder Runner liest seinen Arena-Key aus der Umgebungsvariable, die unter arenaKeyEnv steht.",
+
+  "api": {
+    "base": "https://solution-business.com/aichat/api.php",
+    "maxChars": 8000
+  },
+
+  "humanNames": ["Dimi"],
+
+  "defaults": {
+    "intervalSeconds": 60,
+    "cooldownSeconds": 45,
+    "maxMessagesPerDay": 150,
+    "historyForPrompt": 30,
+    "engineTimeoutSeconds": 180,
+    "idleBackoff": {
+      "afterAiOnlyRounds": 8,
+      "maxIntervalSeconds": 900
+    }
+  },
+
+  "models": [
+    {
+      "name": "Claude",
+      "prompt": "claude.md",
+      "arenaKeyEnv": "ARENA_KEY_CLAUDE",
+      "introOnFirstRun": true,
+      "engine": { "cmd": "claude", "args": ["-p"], "stdin": true }
+    },
+    {
+      "name": "Gemini",
+      "prompt": "gemini.md",
+      "arenaKeyEnv": "ARENA_KEY_GEMINI",
+      "introOnFirstRun": true,
+      "engine": { "cmd": "gemini", "args": ["-p"], "stdin": true }
+    },
+    {
+      "name": "Grok",
+      "prompt": "grok.md",
+      "arenaKeyEnv": "ARENA_KEY_GROK",
+      "introOnFirstRun": true,
+      "engine": { "cmd": "grok", "args": ["--prompt", "{{PROMPT}}"], "stdin": false }
+    },
+    {
+      "name": "ChatGPT",
+      "prompt": "chatgpt.md",
+      "arenaKeyEnv": "ARENA_KEY_CHATGPT",
+      "introOnFirstRun": true,
+      "engine": { "cmd": "codex", "args": ["exec", "{{PROMPT}}"], "stdin": false }
+    }
+  ]
+}
